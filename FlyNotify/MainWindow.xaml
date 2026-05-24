@@ -6,7 +6,185 @@
         xmlns:local="clr-namespace:FlyNotify"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
+
+
+    <Window.Resources>
+        <!-- Brand Theme Color Variables -->
+        <SolidColorBrush x:Key="QantasRedBrush" Color="#E02020"/>
+        <SolidColorBrush x:Key="JetCharcoalBrush" Color="#1A1A1A"/>
+        <SolidColorBrush x:Key="SlateGrayBrush" Color="#54565A"/>
+        <SolidColorBrush x:Key="LightGrayBorderBrush" Color="#D1D1D1"/>
+        <SolidColorBrush x:Key="LinkBlueBrush" Color="#0066CC"/>
+
+        <!-- Shared Component Interface Styles -->
+        <Style x:Key="BrandButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource QantasRedBrush}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#B01818"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="ActionLinkStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource LinkRedBrush}"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="TextDecorations" Value="Underline"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="5,0"/>
+        </Style>
+    </Window.Resources>
+
     <Grid>
+
+        <Grid.RowDefinitions>
+            <!-- Header Bar Area -->
+            <RowDefinition Height="Auto"/>
+            <!-- Action Management Strip -->
+            <RowDefinition Height="Auto"/>
+            <!-- Primary Data Presentation Display -->
+            <RowDefinition Height="*"/>
+            <!-- System Execution Status Bar -->
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header Panel Display -->
+        <Border Grid.Row="0" 
+                Background="{StaticResource JetCharcoalBrush}" 
+                Padding="20,15">
+            <Grid>
+                <TextBlock Text="FLYNOTIFY" 
+                           Foreground="White" 
+                           FontSize="20" 
+                           FontWeight="Black" />
+                <TextBlock Text="QFF Award Seat Tracker" 
+                           Foreground="#A0A0A0" 
+                           HorizontalAlignment="Right" 
+                           VerticalAlignment="Center" 
+                           FontSize="12"/>
+            </Grid>
+        </Border>
+
+        <!-- Command Button and Control Strip -->
+        <Border Grid.Row="1" 
+                Background="White" 
+                BorderBrush="{StaticResource LightGrayBorderBrush}" 
+                BorderThickness="0,0,0,1" 
+                Padding="20,12">
+            <Grid>
+                <StackPanel Orientation="Horizontal" 
+                            HorizontalAlignment="Left">
+                    <Button Content="Add Flight Profile" 
+                            Style="{StaticResource BrandButtonStyle}" 
+                            Margin="0,0,10,0"
+                            Click="AddFlightButton_Click"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" 
+                            HorizontalAlignment="Right">
+                    <Button Content="Run Manual Batch Query" 
+                            Style="{StaticResource BrandButtonStyle}" 
+
+                            Click="ManualBatchButton_Click"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Primary Results Data View Table Grid -->
+        <DataGrid Grid.Row="2" 
+                  x:Name="FlightDataGrid"
+                  Margin="20" 
+                  AutoGenerateColumns="False" 
+                  CanUserAddRows="False"
+                  Background="White" 
+                  BorderBrush="{StaticResource LightGrayBorderBrush}"
+                  RowHeaderWidth="0" 
+                  GridLinesVisibility="Horizontal"
+                  HorizontalGridLinesBrush="#E5E5E5"
+                  FontSize="13"
+                  IsReadOnly="True">
+
+            <DataGrid.ColumnHeaderStyle>
+                <Style TargetType="DataGridColumnHeader">
+                    <Setter Property="Background" Value="#F2F2F2"/>
+                    <Setter Property="Foreground" Value="{StaticResource JetCharcoalBrush}"/>
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="Padding" Value="10,12"/>
+                    <Setter Property="BorderThickness" Value="0,0,0,2"/>
+                    <Setter Property="BorderBrush" Value="{StaticResource LightGrayBorderBrush}"/>
+                </Style>
+            </DataGrid.ColumnHeaderStyle>
+
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow">
+                    <Setter Property="Padding" Value="0,8"/>
+                    <Style.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="#F9F9F9"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.RowStyle>
+
+            <DataGrid.Columns>
+                <!-- Profile Search Configuration Columns -->
+                <DataGridTextColumn Header="Dep" Binding="{Binding Departure}" Width="1.2*"/>
+                <DataGridTextColumn Header="Arr" Binding="{Binding Arrival}" Width="1.2*"/>
+                <DataGridTextColumn Header="Date" Binding="{Binding TravelDateString}" Width="1.5*"/>
+                <DataGridTextColumn Header="Class" Binding="{Binding CabinClass}" Width="1.2*"/>
+                <DataGridTextColumn Header="Pax" Binding="{Binding PassengerCount}" Width="0.8*"/>
+
+                <!-- Query Runtime Metric Trackers -->
+                <DataGridTextColumn Header="Seat Status" Binding="{Binding AvailabilityStatus}" Width="2*"/>
+                <DataGridTextColumn Header="Last Checked" Binding="{Binding LastCheckedString}" Width="1.8*"/>
+
+                <!-- Hyperlink External Reference Routing Actions Column -->
+                <DataGridTemplateColumn Header="Actions" Width="2.5*">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <TextBlock Text="Qantas Finder" 
+                                           Style="{StaticResource ActionLinkStyle}"
+                                           MouseLeftButtonDown="QantasLink_MouseLeftButtonDown"/>
+                                <TextBlock Text="|" 
+                                           Foreground="{StaticResource LightGrayBorderBrush}" 
+                                           VerticalAlignment="Center" 
+                                           Margin="2,0"/>
+                                <TextBlock Text="ExpertFlyer" 
+                                           Style="{StaticResource ActionLinkStyle}"
+                                           MouseLeftButtonDown="ExpertFlyerLink_MouseLeftButtonDown"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- Operational Feedback Status Footer Strip -->
+        <StatusBar Grid.Row="3" 
+                   Background="#E9E9E9" 
+                   BorderBrush="{StaticResource LightGrayBorderBrush}" 
+                   BorderThickness="0,1,0,0" 
+                   Padding="20,6">
+            <StatusBarItem HorizontalAlignment="Left">
+                <TextBlock x:Name="StatusMessageText" 
+                           Text="System Ready. Daily batch queries automated for 10:00 AM." 
+                           Foreground="{StaticResource SlateGrayBrush}" 
+                           FontSize="11"/>
+            </StatusBarItem>
+            <StatusBarItem HorizontalAlignment="Right">
+                <TextBlock x:Name="EngineSchedulerText" 
+                           Text="Scheduler Status: Idle" 
+                           Foreground="{StaticResource SlateGrayBrush}" 
+                           FontSize="11"/>
+            </StatusBarItem>
+        </StatusBar>
+
 
     </Grid>
 </Window>
