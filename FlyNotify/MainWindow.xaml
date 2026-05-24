@@ -95,12 +95,13 @@
             </Grid>
         </Border>
 
-        <!-- Primary Results Data View Table Grid -->
+        <!-- Primary Presentation Information Table -->
         <DataGrid Grid.Row="2" 
                   x:Name="FlightDataGrid"
                   Margin="20" 
                   AutoGenerateColumns="False" 
                   CanUserAddRows="False"
+                  CanUserSortColumns="True"
                   Background="White" 
                   BorderBrush="{StaticResource LightGrayBorderBrush}"
                   RowHeaderWidth="0" 
@@ -132,19 +133,42 @@
             </DataGrid.RowStyle>
 
             <DataGrid.Columns>
-                <!-- Profile Search Configuration Columns -->
-                <DataGridTextColumn Header="Dep" Binding="{Binding Departure}" Width="1.2*"/>
-                <DataGridTextColumn Header="Arr" Binding="{Binding Arrival}" Width="1.2*"/>
-                <DataGridTextColumn Header="Date" Binding="{Binding TravelDateString}" Width="1.5*"/>
-                <DataGridTextColumn Header="Class" Binding="{Binding CabinClass}" Width="1.2*"/>
+                <!-- Leftmost Concatenated Temporal Column -->
+                <DataGridTemplateColumn Header="Date / Schedule" SortMemberPath="TravelDate" Width="2*">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" Padding="10,0">
+                                <Run Text="{Binding TravelDateString, Mode=OneWay}" />
+                                <Run Text=" (" Foreground="{StaticResource SlateGrayBrush}" />
+                                <Run Text="{Binding DepartureTime, Mode=OneWay}" FontWeight="SemiBold" />
+                                <Run Text=" - " Foreground="{StaticResource SlateGrayBrush}" />
+                                <Run Text="{Binding ArrivalTime, Mode=OneWay}" FontWeight="SemiBold" />
+                                <Run Text=")" Foreground="{StaticResource SlateGrayBrush}" />
+                            </TextBlock>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- Flight Identification Parameter Column -->
+                <DataGridTextColumn Header="Flight No" Binding="{Binding FlightNumber}" Width="1*"/>
+
+                <!-- Routing Parameters Columns -->
+                <DataGridTextColumn Header="Departure" Binding="{Binding Departure}" Width="1.1*"/>
+                <DataGridTextColumn Header="Arrival" Binding="{Binding Arrival}" Width="1.1*"/>
+
+                <!-- Temporal Duration Column -->
+                <DataGridTextColumn Header="Duration" Binding="{Binding DurationString}" Width="1*"/>
+
+                <!-- Capacity and Class Specifications -->
+                <DataGridTextColumn Header="Class" Binding="{Binding CabinClass}" Width="1.1*"/>
                 <DataGridTextColumn Header="Pax" Binding="{Binding PassengerCount}" Width="0.8*"/>
 
-                <!-- Query Runtime Metric Trackers -->
-                <DataGridTextColumn Header="Seat Status" Binding="{Binding AvailabilityStatus}" Width="2*"/>
-                <DataGridTextColumn Header="Last Checked" Binding="{Binding LastCheckedString}" Width="1.8*"/>
+                <!-- Dynamic Tracking Performance Records -->
+                <DataGridTextColumn Header="Seat Status" Binding="{Binding AvailabilityStatus}" Width="1.8*"/>
+                <DataGridTextColumn Header="Last Checked" Binding="{Binding LastCheckedString}" Width="1.6*"/>
 
-                <!-- Hyperlink External Reference Routing Actions Column -->
-                <DataGridTemplateColumn Header="Actions" Width="2.5*">
+                <!-- Interactive Execution Navigation Targets Column -->
+                <DataGridTemplateColumn Header="External Verification Actions" Width="2.3*">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">

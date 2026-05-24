@@ -18,60 +18,52 @@ namespace FlyNotify
     /// </summary>
     public partial class MainWindow : Window
     {
-        public MainWindow()
-        {
-            InitializeComponent();
-        }
-
-
         /*
-            UI Button Interaction Command Event Routing
-        */
-
-        private void AddFlightButton_Click(object sender, RoutedEventArgs e)
-        {
-            // Initialise user profile input form modal window context here
-        }
-
-        private void ManualBatchButton_Click(object sender, RoutedEventArgs e)
-        {
-            // Command pipeline routing to bypass standard schedule timers and execute instant updates
-        }
-
-        /*
-            Interactive Data Grid Column Reference Navigation Actions
+            UI Interaction Router Event Handlers
         */
 
         private void QantasLink_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            // Determine active data row context context, compute parameter token strings, and execute system browser shell
+            // Commented Placeholder: Extract data model row context and open target Qantas Reward Finder URL string
         }
 
         private void ExpertFlyerLink_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            // Translate Qantas cabin selections to ExpertFlyer fare bucket rules, compile string parameters, and launch targeted browser task
+            // Commented Placeholder: Extract data model row context and open target ExpertFlyer availability query string
+        }
+
+        private void AddFlightButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Instantiate the input view modal framework over the primary parent runtime execution surface
+            AddFlightDialog dialog = new AddFlightDialog();
+            dialog.Owner = this;
+
+            // Open window modal surface and intercept affirmative response parameters
+            if (dialog.ShowDialog() == true)
+            {
+                FlightProfileResult freshFlightSpec = dialog.TargetProfile;
+
+                // Add the fresh configuration profile specifications to your local JSON storage structures and refresh grid binding tracking loops here
+            }
+        }
+
+        private void ManualBatchButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Commented Placeholder: Instantly trigger an asynchronous network scrape batch evaluation
         }
 
         /*
-            Workspace Shell Frame Lifecycle Interceptions
+            Application Workspace Shell Window Lifecycle Interceptions
         */
 
         private void MainWindow_StateChanged(object sender, EventArgs e)
         {
-            if (this.WindowState == WindowState.Minimized)
-            {
-                // Collapse desktop application presence tree and register visibility mapping inside the Windows System Notification Tray
-            }
+            // Commented Placeholder: Handle window state transitions to/from system notification tray
         }
 
         private void MainWindow_Closing(object sender, CancelEventArgs e)
         {
-            // Commit remaining session data cache blocks natively to local JSON file structures before allowing engine shutdown
+            // Commented Placeholder: Safe write uncommitted data configurations locally to JSON files prior to teardown
         }
-
-
-
-
-
     }
 }
