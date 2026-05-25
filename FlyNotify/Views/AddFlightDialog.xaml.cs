@@ -10,22 +10,28 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
-namespace FlyNotify
+using System;
+
+using FlyNotify.Models;
+
+namespace FlyNotify.Views
 {
-    /// <summary>
-    /// Interaction logic for AddFlightDialog.xaml
-    /// </summary>
     public partial class AddFlightDialog : Window
     {
+        /*
+            Public property exposed to the parent window. 
+            This must be declared directly under the class definition, never inside a method.
+        */
+        public Models.FlightProfile TargetProfile { get; private set; }
+
         public AddFlightDialog()
         {
             InitializeComponent();
             TargetProfile = null;
         }
 
-
         /*
-            Form Submission and Entry Validation Pipeline Logic
+            Form Submission and Input Validation Pipeline
         */
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
@@ -47,12 +53,10 @@ namespace FlyNotify
                 return;
             }
 
-            // Capture raw structural inputs from form fields
             string cabinType = ((ComboBoxItem)CbCabinClass.SelectedItem).Content.ToString();
             int passengerCount = int.Parse(((ComboBoxItem)CbPassengers.SelectedItem).Content.ToString());
 
-            // Build out result configuration transport payload entity
-            TargetProfile = new FlightProfileResult
+            TargetProfile = new Models.FlightProfile
             {
                 Departure = TxtDeparture.Text.Trim().ToUpper(),
                 Arrival = TxtArrival.Text.Trim().ToUpper(),
@@ -60,8 +64,11 @@ namespace FlyNotify
                 FlightNumber = string.IsNullOrWhiteSpace(TxtFlightNumber.Text) ? "QF000" : TxtFlightNumber.Text.Trim().ToUpper(),
                 DepartureTime = string.IsNullOrWhiteSpace(TxtDepartureTime.Text) ? "--:--" : TxtDepartureTime.Text.Trim(),
                 ArrivalTime = string.IsNullOrWhiteSpace(TxtArrivalTime.Text) ? "--:--" : TxtArrivalTime.Text.Trim(),
+                DurationString = "--h --m",
                 CabinClass = cabinType,
-                PassengerCount = passengerCount
+                PassengerCount = passengerCount,
+                AvailabilityStatus = "Pending Scrape",
+                LastCheckedString = "Never"
             };
 
             this.DialogResult = true;
@@ -69,7 +76,7 @@ namespace FlyNotify
         }
 
         /*
-            Form Discard Action Control Handling
+            Form Discard Action Handling
         */
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
@@ -77,29 +84,4 @@ namespace FlyNotify
             this.Close();
         }
     }
-
-    /*
-        Internal Structural Transport Contract representing the completed dialog selection variables
-    */
-    public class FlightProfileResult
-    {
-        public string Departure { get; set; }
-        public string Arrival { get; set; }
-        public DateTime TravelDate { get; set; }
-        public string FlightNumber { get; set; }
-        public string DepartureTime { get; set; }
-        public string AlignmentTime { get; set; }
-        public string ArrivalTime { get; set; }
-        public string CabinClass { get; set; }
-        public int PassengerCount { get; set; }
-
-        public string TravelDateString
-        {
-            get
-            {
-                return TravelDate.ToString("yyyy-MM-dd");
-            }
-        }
-    }
 }
-

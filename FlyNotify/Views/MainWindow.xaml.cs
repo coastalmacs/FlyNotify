@@ -11,7 +11,9 @@ using System.Windows.Shapes;
 
 using System.ComponentModel;
 
-namespace FlyNotify
+using FlyNotify.Models;
+
+namespace FlyNotify.Views
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -41,7 +43,7 @@ namespace FlyNotify
             // Open window modal surface and intercept affirmative response parameters
             if (dialog.ShowDialog() == true)
             {
-                FlightProfileResult freshFlightSpec = dialog.TargetProfile;
+                Models.FlightProfile freshFlightSpec = dialog.TargetProfile;
 
                 // Add the fresh configuration profile specifications to your local JSON storage structures and refresh grid binding tracking loops here
             }
