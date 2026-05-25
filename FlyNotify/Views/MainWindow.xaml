@@ -6,17 +6,14 @@
         xmlns:local="clr-namespace:FlyNotify"
         mc:Ignorable="d"
         Title="" Height="450" Width="800">
-
-
+    
     <Window.Resources>
-        <!-- Brand Theme Color Variables -->
         <SolidColorBrush x:Key="QantasRedBrush" Color="#E02020"/>
         <SolidColorBrush x:Key="JetCharcoalBrush" Color="#1A1A1A"/>
         <SolidColorBrush x:Key="SlateGrayBrush" Color="#54565A"/>
         <SolidColorBrush x:Key="LightGrayBorderBrush" Color="#D1D1D1"/>
         <SolidColorBrush x:Key="LinkBlueBrush" Color="#0066CC"/>
 
-        <!-- Shared Component Interface Styles -->
         <Style x:Key="BrandButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="{StaticResource QantasRedBrush}"/>
             <Setter Property="Foreground" Value="White"/>
@@ -32,7 +29,7 @@
         </Style>
 
         <Style x:Key="ActionLinkStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource LinkRedBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource LinkBlueBrush}"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="TextDecorations" Value="Underline"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
@@ -41,19 +38,13 @@
     </Window.Resources>
 
     <Grid>
-
         <Grid.RowDefinitions>
-            <!-- Header Bar Area -->
             <RowDefinition Height="Auto"/>
-            <!-- Action Management Strip -->
             <RowDefinition Height="Auto"/>
-            <!-- Primary Data Presentation Display -->
             <RowDefinition Height="*"/>
-            <!-- System Execution Status Bar -->
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Header Panel Display -->
         <Border Grid.Row="0" 
                 Background="{StaticResource JetCharcoalBrush}" 
                 Padding="20,15">
@@ -61,8 +52,9 @@
                 <TextBlock Text="FLYNOTIFY" 
                            Foreground="White" 
                            FontSize="20" 
-                           FontWeight="Black" />
-                <TextBlock Text="QFF Award Seat Tracker" 
+                           FontWeight="Black" 
+                          />
+                <TextBlock Text="QFF Award Seat Analyzer" 
                            Foreground="#A0A0A0" 
                            HorizontalAlignment="Right" 
                            VerticalAlignment="Center" 
@@ -70,7 +62,6 @@
             </Grid>
         </Border>
 
-        <!-- Command Button and Control Strip -->
         <Border Grid.Row="1" 
                 Background="White" 
                 BorderBrush="{StaticResource LightGrayBorderBrush}" 
@@ -89,13 +80,12 @@
                             HorizontalAlignment="Right">
                     <Button Content="Run Manual Batch Query" 
                             Style="{StaticResource BrandButtonStyle}" 
-
+                            Background="{StaticResource SlateGrayBrush}"
                             Click="ManualBatchButton_Click"/>
                 </StackPanel>
             </Grid>
         </Border>
 
-        <!-- Primary Presentation Information Table -->
         <DataGrid Grid.Row="2" 
                   x:Name="FlightDataGrid"
                   Margin="20" 
@@ -133,41 +123,21 @@
             </DataGrid.RowStyle>
 
             <DataGrid.Columns>
-                <!-- Leftmost Concatenated Temporal Column -->
-                <DataGridTemplateColumn Header="Date / Schedule" SortMemberPath="TravelDate" Width="2*">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <TextBlock VerticalAlignment="Center" Padding="10,0">
-                                <Run Text="{Binding TravelDateString, Mode=OneWay}" />
-                                <Run Text=" (" Foreground="{StaticResource SlateGrayBrush}" />
-                                <Run Text="{Binding DepartureTime, Mode=OneWay}" FontWeight="SemiBold" />
-                                <Run Text=" - " Foreground="{StaticResource SlateGrayBrush}" />
-                                <Run Text="{Binding ArrivalTime, Mode=OneWay}" FontWeight="SemiBold" />
-                                <Run Text=")" Foreground="{StaticResource SlateGrayBrush}" />
-                            </TextBlock>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="Date / Schedule" Binding="{Binding FullScheduleDisplay}" Width="2*"/>
 
-                <!-- Flight Identification Parameter Column -->
                 <DataGridTextColumn Header="Flight No" Binding="{Binding FlightNumber}" Width="1*"/>
 
-                <!-- Routing Parameters Columns -->
                 <DataGridTextColumn Header="Departure" Binding="{Binding Departure}" Width="1.1*"/>
                 <DataGridTextColumn Header="Arrival" Binding="{Binding Arrival}" Width="1.1*"/>
 
-                <!-- Temporal Duration Column -->
                 <DataGridTextColumn Header="Duration" Binding="{Binding DurationString}" Width="1*"/>
 
-                <!-- Capacity and Class Specifications -->
-                <DataGridTextColumn Header="Class" Binding="{Binding CabinClass}" Width="1.1*"/>
+                <DataGridTextColumn Header="Class" Binding="{Binding CabinClass}" Width="1.5*"/>
                 <DataGridTextColumn Header="Pax" Binding="{Binding PassengerCount}" Width="0.8*"/>
 
-                <!-- Dynamic Tracking Performance Records -->
                 <DataGridTextColumn Header="Seat Status" Binding="{Binding AvailabilityStatus}" Width="1.8*"/>
                 <DataGridTextColumn Header="Last Checked" Binding="{Binding LastCheckedString}" Width="1.6*"/>
 
-                <!-- Interactive Execution Navigation Targets Column -->
                 <DataGridTemplateColumn Header="External Verification Actions" Width="2.3*">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
@@ -189,7 +159,6 @@
             </DataGrid.Columns>
         </DataGrid>
 
-        <!-- Operational Feedback Status Footer Strip -->
         <StatusBar Grid.Row="3" 
                    Background="#E9E9E9" 
                    BorderBrush="{StaticResource LightGrayBorderBrush}" 
@@ -208,7 +177,5 @@
                            FontSize="11"/>
             </StatusBarItem>
         </StatusBar>
-
-
     </Grid>
 </Window>
