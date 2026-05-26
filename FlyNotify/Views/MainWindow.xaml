@@ -14,7 +14,6 @@
         <SolidColorBrush x:Key="LightGrayBorderBrush" Color="#D1D1D1"/>
         <SolidColorBrush x:Key="LinkBlueBrush" Color="#0066CC"/>
         <SolidColorBrush x:Key="LinkGrayBrush" Color="#54565A"/>
-
         <Style x:Key="BrandButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="{StaticResource QantasRedBrush}"/>
             <Setter Property="Foreground" Value="White"/>
@@ -22,11 +21,32 @@
             <Setter Property="Padding" Value="15,8"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="{StaticResource LinkGrayBrush}"/>
-                </Trigger>
-            </Style.Triggers>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="ButtonBorder"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}"
+                                CornerRadius="2">
+
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                              VerticalAlignment="Center"/>
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource SlateGrayBrush}"/>
+                            </Trigger>
+
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="ButtonBorder" Property="Background" Value="#3D3E40"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
         <Style x:Key="ActionLinkStyle" TargetType="TextBlock">
@@ -99,7 +119,8 @@
                   GridLinesVisibility="Horizontal"
                   HorizontalGridLinesBrush="#E5E5E5"
                   FontSize="13"
-                  IsReadOnly="True">
+                  IsReadOnly="True"
+                  PreviewKeyDown="FlightDataGrid_PreviewKeyDown">
 
             <DataGrid.ColumnHeaderStyle>
                 <Style TargetType="DataGridColumnHeader">

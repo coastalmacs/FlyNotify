@@ -22,8 +22,11 @@ namespace FlyNotify.Views
         {
             InitializeComponent();
 
+            // 1. Recover archived profiles from past application runtimes
+            var historicalRecords = FlightProfilePersistence.LoadProfiles();
+
             // Set up our monitoring array loop and bind directly as items target source
-            MonitoredFlights = new ObservableCollection<FlightProfile>();
+            MonitoredFlights = new ObservableCollection<FlightProfile>(historicalRecords);
             FlightDataGrid.ItemsSource = MonitoredFlights;
         }
 
@@ -41,6 +44,9 @@ namespace FlyNotify.Views
                 if (dialog.TargetProfile != null)
                 {
                     MonitoredFlights.Add(dialog.TargetProfile);
+
+                    // 2. Commit changes instantly to disk whenever a new row profile is added
+                    FlightProfilePersistence.SaveProfiles(MonitoredFlights);
                 }
             }
         }
@@ -73,7 +79,67 @@ namespace FlyNotify.Views
 
         private void MainWindow_Closing(object sender, CancelEventArgs e)
         {
-            // Commented Placeholder: Safe write uncommitted data configurations locally to JSON files prior to teardown
+            // 3. Flush remaining session data cache blocks natively to local JSON file structures before terminating application process boundary
+            FlightProfilePersistence.SaveProfiles(MonitoredFlights);
+        }
+
+        private void FlightDataGrid_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            // Only execute our interception loop if the physical command target is the Delete key
+            if (e.Key == Key.Delete)
+            {
+                // Verify that there is at least one active selected record highlighting the view
+                if (FlightDataGrid.SelectedItems.Count > 0)
+                {
+                    int totalSelectedCount = FlightDataGrid.SelectedItems.Count;
+                    string warningMessage = totalSelectedCount == 1
+                        ? "Are you sure you want to permanently delete the selected flight tracking profile?"
+                        : $"Are you sure you want to permanently delete all {totalSelectedCount} selected flight tracking profiles?";
+
+                    // Standard systemic message query validation block
+                    MessageBoxResult decision = MessageBox.Show(
+                        warningMessage,
+                        "Confirm Profile Deletion",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Question
+                    );
+
+                    if (decision == MessageBoxResult.Yes)
+                    {
+                        /*
+                            Because deleting items directly out of an active collection while WPF 
+                            loops through SelectedItems causes collection mutation errors, we cache 
+                            the targeting elements into a temporary list structure first.
+                        */
+                        var targetsToRemove = new System.Collections.Generic.List<FlightProfile>();
+
+                        foreach (var selectedItem in FlightDataGrid.SelectedItems)
+                        {
+                            if (selectedItem is FlightProfile profile)
+                            {
+                                targetsToRemove.Add(profile);
+                            }
+                        }
+
+                        // Remove the targeted records directly from the bound ObservableCollection
+                        foreach (var target in targetsToRemove)
+                        {
+                            MonitoredFlights.Remove(target);
+                        }
+
+                        // Commit the cleaned data matrix directly to your AppData user configuration file
+                        FlightProfilePersistence.SaveProfiles(MonitoredFlights);
+                    }
+                    else
+                    {
+                        /*
+                            If the user selects 'No', we mark the event routing argument as Handled.
+                            This tells WPF to cancel the action completely, protecting the row data.
+                        */
+                        e.Handled = true;
+                    }
+                }
+            }
         }
     }
 }

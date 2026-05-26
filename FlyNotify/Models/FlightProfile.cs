@@ -26,7 +26,14 @@ namespace FlyNotify.Models
         {
             get
             {
-                return $"{TravelDateString} ({DepartureTime} - {ArrivalTime})";
+                if (DepartureTime == "Pending" || ArrivalTime == "Pending")
+                {
+                    return $"{TravelDateString}";
+                }
+                else
+                {
+                    return $"{TravelDateString} ({DepartureTime} - {ArrivalTime})";
+                }
             }
         }
 

@@ -95,7 +95,7 @@
                 <Grid Margin="0,15,0,0">
                     <StackPanel>
                         <Label Content="Travel Date" Style="{StaticResource FormLabelStyle}"/>
-                        <DatePicker x:Name="DpTravelDate" Padding="5" Width="200" HorizontalAlignment="Left"/>
+                        <DatePicker x:Name="DpTravelDate" Padding="5" Width="200" HorizontalAlignment="Left" />
                     </StackPanel>
                 </Grid>
 

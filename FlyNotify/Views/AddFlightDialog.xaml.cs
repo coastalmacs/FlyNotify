@@ -1,7 +1,8 @@
-﻿using System;
+﻿using FlyNotify.Models;
+using System;
 using System.Collections.Generic;
 using System.Windows;
-using FlyNotify.Models;
+using System.Windows.Controls;
 
 namespace FlyNotify.Views
 {
@@ -13,6 +14,9 @@ namespace FlyNotify.Views
         {
             InitializeComponent();
             TargetProfile = null;
+
+            DpTravelDate.SelectedDate = DateTime.Today;
+
         }
 
         /*
@@ -62,21 +66,21 @@ namespace FlyNotify.Views
             // Compile all active Cabin Class CheckBox selections into a normalized comma-delimited string array
             var selectedCabins = new System.Collections.Generic.List<string>();
 
-            if (ChkEconomy.IsChecked == true)
+            if (ChkFirst.IsChecked == true)
             {
-                selectedCabins.Add("Economy");
-            }
-            if (ChkPremium.IsChecked == true)
-            {
-                selectedCabins.Add("Premium Economy");
+                selectedCabins.Add("F");
             }
             if (ChkBusiness.IsChecked == true)
             {
-                selectedCabins.Add("Business");
+                selectedCabins.Add("J");
             }
-            if (ChkFirst.IsChecked == true)
+            if (ChkPremium.IsChecked == true)
             {
-                selectedCabins.Add("First");
+                selectedCabins.Add("W");
+            }
+            if (ChkEconomy.IsChecked == true)
+            {
+                selectedCabins.Add("Y");
             }
 
             // Fallback validation if the user cleared out all checkbox items
@@ -119,11 +123,11 @@ namespace FlyNotify.Views
                 PassengerCount = computedPassengerCount,
 
                 // Standard model properties excluded from this dialog are set safely to tracking defaults
-                FlightNumber = "QF000",
-                DepartureTime = "--:--",
-                ArrivalTime = "--:--",
-                Duration = "--h --m",
-                AvailabilityStatus = "Pending Scrape",
+                FlightNumber = "Pending",
+                DepartureTime = "Pending",
+                ArrivalTime = "Pending",
+                Duration = "Pending",
+                AvailabilityStatus = "Pending",
                 LastChecked = DateTime.MinValue
             };
 
