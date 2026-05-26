@@ -112,8 +112,8 @@ namespace FlyNotify.Views
             // Bind the validated structural entries to your unmodified FlightProfile target model instance
             TargetProfile = new FlyNotify.Models.FlightProfile
             {
-                Departure = TxtDeparture.Text.Trim().ToUpper(),
-                Arrival = TxtArrival.Text.Trim().ToUpper(),
+                DepartureAirport = TxtDeparture.Text.Trim().ToUpper(),
+                ArrivalAirport = TxtArrival.Text.Trim().ToUpper(),
                 TravelDate = DpTravelDate.SelectedDate.Value,
                 CabinClass = combinedCabinString,
                 PassengerCount = computedPassengerCount,
@@ -122,9 +122,9 @@ namespace FlyNotify.Views
                 FlightNumber = "QF000",
                 DepartureTime = "--:--",
                 ArrivalTime = "--:--",
-                DurationString = "--h --m",
+                Duration = "--h --m",
                 AvailabilityStatus = "Pending Scrape",
-                LastCheckedString = "Never"
+                LastChecked = DateTime.MinValue
             };
 
             // Set the dialog operational code frame results and clear visibility state

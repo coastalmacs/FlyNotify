@@ -13,6 +13,7 @@
         <SolidColorBrush x:Key="SlateGrayBrush" Color="#54565A"/>
         <SolidColorBrush x:Key="LightGrayBorderBrush" Color="#D1D1D1"/>
         <SolidColorBrush x:Key="LinkBlueBrush" Color="#0066CC"/>
+        <SolidColorBrush x:Key="LinkGrayBrush" Color="#54565A"/>
 
         <Style x:Key="BrandButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="{StaticResource QantasRedBrush}"/>
@@ -23,13 +24,13 @@
             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#B01818"/>
+                    <Setter Property="Background" Value="{StaticResource LinkGrayBrush}"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
 
         <Style x:Key="ActionLinkStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource LinkBlueBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource LinkGrayBrush}"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="TextDecorations" Value="Underline"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
@@ -80,7 +81,7 @@
                             HorizontalAlignment="Right">
                     <Button Content="Run Manual Batch Query" 
                             Style="{StaticResource BrandButtonStyle}" 
-                            Background="{StaticResource SlateGrayBrush}"
+                            Background="{StaticResource QantasRedBrush}"
                             Click="ManualBatchButton_Click"/>
                 </StackPanel>
             </Grid>
@@ -123,26 +124,26 @@
             </DataGrid.RowStyle>
 
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Date / Schedule" Binding="{Binding FullScheduleDisplay}" Width="2*"/>
+                <DataGridTextColumn Header="Date" Binding="{Binding FullScheduleDisplay}" Width="2*"/>
 
-                <DataGridTextColumn Header="Flight No" Binding="{Binding FlightNumber}" Width="1*"/>
+                <DataGridTextColumn Header="Flight" Binding="{Binding FlightNumber}" Width="1.1*"/>
 
-                <DataGridTextColumn Header="Departure" Binding="{Binding Departure}" Width="1.1*"/>
-                <DataGridTextColumn Header="Arrival" Binding="{Binding Arrival}" Width="1.1*"/>
+                <DataGridTextColumn Header="Depart" Binding="{Binding DepartureAirport}" Width="1.3*"/>
+                <DataGridTextColumn Header="Arrive" Binding="{Binding ArrivalAirport}" Width="1.3*"/>
 
-                <DataGridTextColumn Header="Duration" Binding="{Binding DurationString}" Width="1*"/>
+                <DataGridTextColumn Header="Time" Binding="{Binding Duration}" Width="1*"/>
 
                 <DataGridTextColumn Header="Class" Binding="{Binding CabinClass}" Width="1.5*"/>
                 <DataGridTextColumn Header="Pax" Binding="{Binding PassengerCount}" Width="0.8*"/>
 
-                <DataGridTextColumn Header="Seat Status" Binding="{Binding AvailabilityStatus}" Width="1.8*"/>
-                <DataGridTextColumn Header="Last Checked" Binding="{Binding LastCheckedString}" Width="1.6*"/>
+                <DataGridTextColumn Header="Status" Binding="{Binding AvailabilityStatus}" Width="1.8*"/>
+                <DataGridTextColumn Header="Checked" Binding="{Binding LastCheckedDisplay}" Width="1.6*"/>
 
-                <DataGridTemplateColumn Header="External Verification Actions" Width="2.3*">
+                <DataGridTemplateColumn Header="Links" Width="2.3*">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                <TextBlock Text="Qantas Finder" 
+                                <TextBlock Text="Qantas" 
                                            Style="{StaticResource ActionLinkStyle}"
                                            MouseLeftButtonDown="QantasLink_MouseLeftButtonDown"/>
                                 <TextBlock Text="|" 
