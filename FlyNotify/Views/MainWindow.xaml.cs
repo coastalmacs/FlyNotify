@@ -53,7 +53,46 @@ namespace FlyNotify.Views
 
         private void ManualBatchButton_Click(object sender, RoutedEventArgs e)
         {
-            // Commented Placeholder: Instantly trigger an asynchronous network scrape batch evaluation
+            /*
+                TEMPORARY DEBUGGING HOOK: Inspect the active selection state of the 
+                primary DataGrid control to extract a single targeted model instance context.
+            */
+            if (FlightDataGrid.SelectedItem is FlightProfile selectedProfile)
+            {
+                // Invoke the URL string compiler logic directly from the data layer object
+                string compiledUrl = selectedProfile.BuildQantasQueryUrl();
+
+                try
+                {
+                    /*
+                        Thread-safe assignment to the Win32 Operating System clipboard container.
+                        Requires a fallback loop to capture external memory access lock issues.
+                    */
+                    Clipboard.SetText(compiledUrl);
+
+                    // Update the layout status panel items to give real-time execution feedback
+                    StatusMessageText.Text = $"[DEBUG SUCCESS] Qantas URL copied to clipboard for: {selectedProfile.DepartureAirport} -> {selectedProfile.ArrivalAirport}";
+                    EngineSchedulerText.Text = "Status: Debug Copied";
+                }
+                catch (Exception ex)
+                {
+                    StatusMessageText.Text = $"[DEBUG ERROR] Clipboard allocation failed: {ex.Message}";
+                    System.Diagnostics.Debug.WriteLine($"[Clipboard Copy Exception]: {ex.Message}");
+                }
+            }
+            else
+            {
+                /*
+                    Provide visual feedback if the developer clicks the button 
+                    without highlighting a row inside the table workspace first.
+                */
+                MessageBox.Show(
+                    "Please highlight a flight profile row inside the table grid first to parse a test URL query string.",
+                    "Debug Tool Verification",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning
+                );
+            }
         }
 
         /*
