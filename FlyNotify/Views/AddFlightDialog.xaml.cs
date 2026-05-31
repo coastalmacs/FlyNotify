@@ -19,121 +19,88 @@ namespace FlyNotify.Views
 
         }
 
-        /*
-            Form Submission and Entry Validation Pipeline Logic
-        */
-        /*
-              Form Submission, Input Evaluation, and Data Packaging Pipeline
-          */
+
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
-            // Validate that the Departure text entry contains a strict 3-letter IATA identifier
-            if (string.IsNullOrWhiteSpace(TxtDeparture.Text) || TxtDeparture.Text.Trim().Length != 3)
+            // 1. Clean and normalize the user input text blocks to avoid trailing space mismatch bugs
+            string sanitizedDeparture = TxtDeparture.Text.Trim().ToUpper();
+            string sanitizedArrival = TxtArrival.Text.Trim().ToUpper();
+
+            // 2. Core Operational Validation check ensuring origin and destination routes are not identical
+            if (sanitizedDeparture == sanitizedArrival && !string.IsNullOrEmpty(sanitizedDeparture))
             {
                 MessageBox.Show(
-                    "Please enter a valid 3-letter IATA departure airport code.",
-                    "Validation Error",
+                    "The departure airport and arrival airport codes cannot be identical. Please specify a valid route sequence.",
+                    "Route Configuration Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning
+                );
+
+                // Highlight the error location by focusing the arrival input field back to the user
+                TxtArrival.Focus();
+                TxtArrival.SelectAll();
+
+                return; // Aborts form saving and breaks execution sequence safely
+            }
+
+            // 3. (Optional Baseline Checks) Keep your standard empty boundary tracking logic below
+            if (string.IsNullOrEmpty(sanitizedDeparture) || string.IsNullOrEmpty(sanitizedArrival))
+            {
+                MessageBox.Show(
+                    "Please fill out both departure and arrival fields before saving.",
+                    "Missing Information",
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning
                 );
                 return;
             }
 
-            // Ensure the Destination text input has been filled out
-            if (string.IsNullOrWhiteSpace(TxtArrival.Text))
+            if (DpTravelDate.SelectedDate == null)
             {
                 MessageBox.Show(
-                    "Please specify a valid arrival airport or regional tracking code.",
-                    "Validation Error",
+                    "Please select a valid travel date before saving.",
+                    "Missing Information",
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning
                 );
                 return;
             }
 
-            // Ensure a physical chronological calendar node has been committed
-            if (!DpTravelDate.SelectedDate.HasValue)
+            // --- Compilation Engine Integration ---
+            // If all validation rules clear successfully, construct the domain instance contract
+            CabinClasses chosenCabins = CabinClasses.None;
+            if (ChkEconomy.IsChecked == true) { chosenCabins |= CabinClasses.Economy; }
+            if (ChkPremium.IsChecked == true) { chosenCabins |= CabinClasses.PremiumEconomy; }
+            if (ChkBusiness.IsChecked == true) { chosenCabins |= CabinClasses.Business; }
+            if (ChkFirst.IsChecked == true) { chosenCabins |= CabinClasses.First; }
+
+            if (chosenCabins == CabinClasses.None)
             {
                 MessageBox.Show(
-                    "A valid travel tracking target date selection is required.",
-                    "Validation Error",
+                    "Please select at least one cabin class tier to monitor.",
+                    "Missing Information",
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning
                 );
                 return;
             }
 
-            // Compile all active Cabin Class CheckBox selections into a normalized comma-delimited string array
-            var selectedCabins = new System.Collections.Generic.List<string>();
+            int passengers = 1;
+            int.TryParse(TxtPassengers.Text, out passengers);
 
-            if (ChkFirst.IsChecked == true)
+            TargetProfile = new FlightProfile
             {
-                selectedCabins.Add("F");
-            }
-            if (ChkBusiness.IsChecked == true)
-            {
-                selectedCabins.Add("J");
-            }
-            if (ChkPremium.IsChecked == true)
-            {
-                selectedCabins.Add("W");
-            }
-            if (ChkEconomy.IsChecked == true)
-            {
-                selectedCabins.Add("Y");
-            }
-
-            // Fallback validation if the user cleared out all checkbox items
-            if (selectedCabins.Count == 0)
-            {
-                MessageBox.Show(
-                    "Please select at least one tracking cabin class category.",
-                    "Validation Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Warning
-                );
-                return;
-            }
-
-            string combinedCabinString = string.Join(", ", selectedCabins);
-
-            // Determine the active mutually-exclusive Passenger count selection from the RadioButton group
-            int computedPassengerCount = 1;
-
-            if (RbPax2.IsChecked == true)
-            {
-                computedPassengerCount = 2;
-            }
-            else if (RbPax3.IsChecked == true)
-            {
-                computedPassengerCount = 3;
-            }
-            else if (RbPax4.IsChecked == true)
-            {
-                computedPassengerCount = 4;
-            }
-
-            // Bind the validated structural entries to your unmodified FlightProfile target model instance
-            TargetProfile = new FlyNotify.Models.FlightProfile
-            {
-                DepartureAirport = TxtDeparture.Text.Trim().ToUpper(),
-                ArrivalAirport = TxtArrival.Text.Trim().ToUpper(),
+                DepartureAirport = sanitizedDeparture,
+                ArrivalAirport = sanitizedArrival,
                 TravelDate = DpTravelDate.SelectedDate.Value,
-                CabinClass = combinedCabinString,
-                PassengerCount = computedPassengerCount,
-
-                // Standard model properties excluded from this dialog are set safely to tracking defaults
-                FlightNumber = "Pending",
-                DepartureTime = "Pending",
-                ArrivalTime = "Pending",
-                Duration = "Pending",
-                AvailabilityStatus = "Pending",
-                LastChecked = DateTime.MinValue
+                SelectedCabins = chosenCabins,
+                PassengerCount = passengers,
+                AvailabilityStatus = "TBD"
             };
 
-            // Set the dialog operational code frame results and clear visibility state
-            this.DialogResult = true;
-            this.Close();
+            // Set dialog completion output flags and close out active modal view channel
+            DialogResult = true;
+            Close();
         }
 
         /*

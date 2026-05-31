@@ -1,33 +1,78 @@
 ﻿using System;
 using System.Text;
+using System.Text.Json.Serialization;
+using System.Windows.Media.Imaging;
 
 namespace FlyNotify.Models
 {
     public class FlightProfile
     {
+        // Required from user
         public required string DepartureAirport { get; set; }
         public required string ArrivalAirport { get; set; }
         public DateTime TravelDate { get; set; }
-        public required string FlightNumber { get; set; }
-        public required string DepartureTime { get; set; }
-        public required string ArrivalTime { get; set; }
-        public required string Duration { get; set; }
-        public required string CabinClass { get; set; }
-        public int PassengerCount { get; set; }
-        public required string AvailabilityStatus { get; set; }
-        public DateTime LastChecked { get; set; }
+        public int PassengerCount { get; set; } = 1;
+
+        [JsonIgnore]
+        public CabinClasses SelectedCabins { get; set; } = CabinClasses.Business;
+
+        // Scraped by system
+        public string FlightNumber { get; set; } = "TDB";
+        public  string DepartureTime { get; set; } = "TBD";
+        public  string ArrivalTime { get; set; } = "TDB";
+        public  string Duration { get; set; } = "TBD";
+        public string TargetCabin { get; set; } = "TBD";
+        public required string AvailabilityStatus { get; set; } = "TBD";
+        public DateTime LastChecked { get; set; } = DateTime.MinValue;
+
+        public string CabinClass
+        {
+            get
+            {
+                return SelectedCabins.ToQantasString();
+            }
+            set
+            {
+                // Facilitates safe string parsing back into flags when reloading from JSON files
+                CabinClasses parsedFlags = CabinClasses.None;
+
+                if (!string.IsNullOrEmpty(value))
+                {
+                    string normalized = value.ToUpper();
+
+                    if (normalized.Contains("ECONOMY") && !normalized.Contains("PREMIUM"))
+                    {
+                        parsedFlags |= CabinClasses.Economy;
+                    }
+                    if (normalized.Contains("PREMIUM"))
+                    {
+                        parsedFlags |= CabinClasses.PremiumEconomy;
+                    }
+                    if (normalized.Contains("BUSINESS"))
+                    {
+                        parsedFlags |= CabinClasses.Business;
+                    }
+                    if (normalized.Contains("FIRST"))
+                    {
+                        parsedFlags |= CabinClasses.First;
+                    }
+                }
+
+                SelectedCabins = parsedFlags == CabinClasses.None ? CabinClasses.Business : parsedFlags;
+            }
+        }
+
 
         public string TravelDateString
         {
-            get { return TravelDate.ToString("yyyy-MM-dd"); }
+            get { return TravelDate.ToString("yyyy-MM-dd"); } 
         }
-
 
         public string FullScheduleDisplay
         {
             get
             {
-                if (DepartureTime == "Pending" || ArrivalTime == "Pending")
+                if (DepartureTime == "TBD" || ArrivalTime == "TBD")
                 {
                     return $"{TravelDateString}";
                 }
@@ -59,16 +104,15 @@ namespace FlyNotify.Models
         */
         public string BuildQantasQueryUrl()
         {
-            // For single specific dates, pass the exact same date twice separated by an uppercase 'I'
-            string dateRangeParam = $"{TravelDateString}I{TravelDateString}";
+            string dateRangeParam = $"{TravelDateString}I{TravelDateString}"; // Spec date layout requirement
 
             var urlBuilder = new StringBuilder("https://flightrewardfinder.qantas.com/");
             urlBuilder.Append($"?o={Uri.EscapeDataString(DepartureAirport)}");
             urlBuilder.Append($"&d={Uri.EscapeDataString(ArrivalAirport)}");
-            urlBuilder.Append($"&c={Uri.EscapeDataString(CabinClass)}"); // Maps directly to comma-separated descriptive words
+            urlBuilder.Append($"&c={Uri.EscapeDataString(SelectedCabins.ToQantasString())}"); // e.g. "Business,First"
             urlBuilder.Append($"&p={PassengerCount}");
             urlBuilder.Append($"&dr={dateRangeParam}");
-            urlBuilder.Append("&pg=1"); // Forces default page index 1
+            urlBuilder.Append("&pg=1");
 
             return urlBuilder.ToString();
         }
@@ -79,47 +123,23 @@ namespace FlyNotify.Models
         */
         public string BuildExpertFlyerQueryUrl()
         {
-            // Translate comma-separated descriptive classes into single-character fare buckets
-            var fareBucketBuilder = new System.Collections.Generic.List<string>();
-            string normalizedCabin = CabinClass.ToUpper();
-
-            if (normalizedCabin.Contains("FIRST"))
-            {
-                fareBucketBuilder.Add("P"); // P corresponds with First availability on Qantas
-            }
-            if (normalizedCabin.Contains("BUSINESS"))
-            {
-                fareBucketBuilder.Add("U"); // U corresponds with Business availability on Qantas
-            }
-            if (normalizedCabin.Contains("PREMIUM"))
-            {
-                fareBucketBuilder.Add("W"); // Standard industry code for Premium Economy
-            }
-            if (normalizedCabin.Contains("ECONOMY") && !normalizedCabin.Contains("PREMIUM"))
-            {
-                fareBucketBuilder.Add("X"); // Standard industry award code for Economy
-            }
-
-            string classFilterParam = string.Join(",", fareBucketBuilder);
-
-            // Structure departure time parameter with specific spec-mandated 'T00%3A00' trailing time component
-            string dateTimeParam = $"{TravelDateString}T00%3A00";
+            string dateTimeParam = $"{TravelDateString}T00%3A00"; // Strict spec timestamp
+            string classFilterParam = SelectedCabins.ToExpertFlyerString(); // e.g. "U,P"
 
             var urlBuilder = new StringBuilder("https://www.expertflyer.com/air/availability/results");
             urlBuilder.Append($"?origin={Uri.EscapeDataString(DepartureAirport)}");
             urlBuilder.Append($"&destination={Uri.EscapeDataString(ArrivalAirport)}");
             urlBuilder.Append($"&departureDateTime={dateTimeParam}");
-            urlBuilder.Append("&returnDateTime="); // Omitted empty for a single-leg monitoring query
-            urlBuilder.Append("&alliance=none"); // Spec restriction rule
-            urlBuilder.Append("&excludeCodeshares=false"); // Spec restriction rule
+            urlBuilder.Append("&returnDateTime=");
+            urlBuilder.Append("&alliance=none"); // Mandatory spec parameter
+            urlBuilder.Append("&excludeCodeshares=false"); // Mandatory spec parameter
 
             if (!string.IsNullOrEmpty(classFilterParam))
             {
                 urlBuilder.Append($"&classFilter={Uri.EscapeDataString(classFilterParam)}");
             }
 
-            // Append mandatory result configuration matrix appendix directly to end of string
-            urlBuilder.Append("&pcc=USA+%28Default%29&resultsDisplay=single");
+            urlBuilder.Append("&pcc=USA+%28Default%29&resultsDisplay=single"); // Mandatory spec appendix payload
 
             return urlBuilder.ToString();
         }
