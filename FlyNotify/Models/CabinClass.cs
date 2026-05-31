@@ -27,7 +27,7 @@ namespace FlyNotify.Models
             Maps selected flags to a comma-separated list of official 
             ExpertFlyer single-letter award fare bucket codes.
         */
-        public static string ToExpertFlyerString(this CabinClasses cabins)
+        public static string ToFareBucketCode(this CabinClasses cabins)
         {
             var buckets = new List<string>();
 

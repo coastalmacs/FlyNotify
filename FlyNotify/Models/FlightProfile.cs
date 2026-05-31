@@ -124,7 +124,7 @@ namespace FlyNotify.Models
         public string BuildExpertFlyerQueryUrl()
         {
             string dateTimeParam = $"{TravelDateString}T00%3A00"; // Strict spec timestamp
-            string classFilterParam = SelectedCabins.ToExpertFlyerString(); // e.g. "U,P"
+            string classFilterParam = SelectedCabins.ToFareBucketCode(); // e.g. "U,P"
 
             var urlBuilder = new StringBuilder("https://www.expertflyer.com/air/availability/results");
             urlBuilder.Append($"?origin={Uri.EscapeDataString(DepartureAirport)}");

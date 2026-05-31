@@ -99,7 +99,7 @@
 
                 <StackPanel Orientation="Horizontal" 
                             HorizontalAlignment="Right">
-                    <Button Content="Run Manual Batch Query" 
+                    <Button x:Name="ManualBatchBtn" Content="Run Manual Batch Query" 
                             Style="{StaticResource BrandButtonStyle}" 
                             Background="{StaticResource QantasRedBrush}"
                             Click="ManualBatchButton_Click"/>

@@ -18,6 +18,8 @@ namespace FlyNotify.Views
         */
         public ObservableCollection<FlightProfile> MonitoredFlights { get; set; }
 
+        private DateTime _lastExpertFlyerReminderTime = DateTime.MinValue;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -51,61 +53,109 @@ namespace FlyNotify.Views
             }
         }
 
-        private void ManualBatchButton_Click(object sender, RoutedEventArgs e)
+        private async void ManualBatchButton_Click(object sender, RoutedEventArgs e)
         {
-            /*
-                TEMPORARY DEBUGGING HOOK: Inspect the active selection state of the 
-                primary DataGrid control to extract a single targeted model instance context.
-            */
-            if (FlightDataGrid.SelectedItem is FlightProfile selectedProfile)
+            // Verify that we have profiles available in memory to process
+            if (MonitoredFlights.Count == 0)
             {
-                // Invoke the URL string compiler logic directly from the data layer object
-                string compiledUrl = selectedProfile.BuildQantasQueryUrl();
-
-                try
-                {
-                    /*
-                        Thread-safe assignment to the Win32 Operating System clipboard container.
-                        Requires a fallback loop to capture external memory access lock issues.
-                    */
-                    Clipboard.SetText(compiledUrl);
-
-                    // Update the layout status panel items to give real-time execution feedback
-                    StatusMessageText.Text = $"[DEBUG SUCCESS] Qantas URL copied to clipboard for: {selectedProfile.DepartureAirport} -> {selectedProfile.ArrivalAirport}";
-                    EngineSchedulerText.Text = "Status: Debug Copied";
-                }
-                catch (Exception ex)
-                {
-                    StatusMessageText.Text = $"[DEBUG ERROR] Clipboard allocation failed: {ex.Message}";
-                    System.Diagnostics.Debug.WriteLine($"[Clipboard Copy Exception]: {ex.Message}");
-                }
-            }
-            else
-            {
-                /*
-                    Provide visual feedback if the developer clicks the button 
-                    without highlighting a row inside the table workspace first.
-                */
                 MessageBox.Show(
-                    "Please highlight a flight profile row inside the table grid first to parse a test URL query string.",
-                    "Debug Tool Verification",
+                    "There are no flight tracking profiles configured to execute. Please add a profile first.",
+                    "Batch Processing Ignored",
                     MessageBoxButton.OK,
-                    MessageBoxImage.Warning
+                    MessageBoxImage.Information
                 );
+                return;
             }
+
+            // Lock structural commands panel buttons to prevent duplicate thread initialization overlap
+            ManualBatchBtn.IsEnabled = false;
+            StatusMessageText.Text = "Executing global background flight availability analysis batch query...";
+            EngineSchedulerText.Text = "Scheduler Status: Running";
+
+            /*
+                Loop sequentially through the flight collection manifest matrix.
+                Using 'await' avoids thread starvation issues, ensuring every row item 
+                processes gracefully without impacting application interactivity.
+            */
+            foreach (var profile in MonitoredFlights)
+            {
+                await FlyNotify.Services.ScraperService.ExecuteScrapeAsync(profile);
+            }
+
+            // Flush completed status updates directly down to AppData disk structures
+            FlyNotify.Models.FlightProfilePersistence.SaveProfiles(MonitoredFlights);
+
+            // Re-enable core command strip operations
+            ManualBatchBtn.IsEnabled = true;
+            StatusMessageText.Text = $"Batch Query execution loop completed safely at {DateTime.Now.ToString("HH:mm:ss")}. All profiles synchronized.";
+            EngineSchedulerText.Text = "Scheduler Status: Idle";
         }
 
         /*
             Interactive Data Grid Column Reference Navigation Actions
         */
+        /*
+                    Interactive Data Grid Column Reference Navigation Actions
+                */
         private void QantasLink_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            // Commented Placeholder: Extract data model row context and open target Qantas Reward Finder URL string
+            // Extract row context data from the clicked FrameworkElement text node
+            if (sender is FrameworkElement element && element.DataContext is FlightProfile profile)
+            {
+                // Delegate query generation directly out to our domain class instance logic
+                string targetUrl = profile.BuildQantasQueryUrl();
+
+                try
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = targetUrl,
+                        UseShellExecute = true
+                    });
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[Browser Search Initiation Failure]: {ex.Message}");
+                }
+            }
         }
 
         private void ExpertFlyerLink_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            // Commented Placeholder: Extract data model row context and open target ExpertFlyer availability query string
+            // Parse context data safely from the active cell selection path
+            if (sender is FrameworkElement element && element.DataContext is FlightProfile profile)
+            {
+                // Enforce strict App Specification hourly notification limits
+                TimeSpan timeSinceLastPrompt = DateTime.Now - _lastExpertFlyerReminderTime;
+
+                if (timeSinceLastPrompt.TotalHours >= 1.0)
+                {
+                    MessageBox.Show(
+                        "Please ensure you are fully logged into your active ExpertFlyer account in your default web browser before processing availability queries.",
+                        "ExpertFlyer Authentication Reminder",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information
+                    );
+
+                    _lastExpertFlyerReminderTime = DateTime.Now;
+                }
+
+                // Compile spec parameters cleanly out via the instance model rules
+                string targetUrl = profile.BuildExpertFlyerQueryUrl();
+
+                try
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = targetUrl,
+                        UseShellExecute = true
+                    });
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[Browser Search Initiation Failure]: {ex.Message}");
+                }
+            }
         }
 
         /*
