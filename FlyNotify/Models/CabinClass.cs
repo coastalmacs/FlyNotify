@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace FlyNotify.Models
@@ -77,6 +77,34 @@ namespace FlyNotify.Models
             }
 
             return string.Join(",", labels);
+        }
+
+        /*
+            Maps selected flags to a comma-separated list of official 
+            IATA single-letter fare class codes (F, J, W, Y).
+        */
+        public static string ToFareClassCode(this CabinClasses cabins)
+        {
+            var codes = new List<string>();
+
+            if (cabins.HasFlag(CabinClasses.First))
+            {
+                codes.Add("F");
+            }
+            if (cabins.HasFlag(CabinClasses.Business))
+            {
+                codes.Add("J");
+            }
+            if (cabins.HasFlag(CabinClasses.PremiumEconomy))
+            {
+                codes.Add("W");
+            }
+            if (cabins.HasFlag(CabinClasses.Economy))
+            {
+                codes.Add("Y");
+            }
+
+            return string.Join(" ", codes);
         }
     }
 }

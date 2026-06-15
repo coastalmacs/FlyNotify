@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Controls;
 using FlyNotify.Models;
 
 namespace FlyNotify.Views
@@ -37,10 +38,12 @@ namespace FlyNotify.Views
         */
         private void AddFlightButton_Click(object sender, RoutedEventArgs e)
         {
-            AddFlightDialog dialog = new AddFlightDialog();
-            dialog.Owner = this;
+            FlightProfileDialog dialog = new()
+            {
+                Owner = this
+            };
 
-            if (dialog.ShowDialog() == true)
+            if (dialog.ShowDialog() is true)
             {
                 // Pull out the completed modal data contract and pipe it cleanly into the active table grid
                 if (dialog.TargetProfile != null)
@@ -87,7 +90,7 @@ namespace FlyNotify.Views
 
             // Re-enable core command strip operations
             ManualBatchBtn.IsEnabled = true;
-            StatusMessageText.Text = $"Batch Query execution loop completed safely at {DateTime.Now.ToString("HH:mm:ss")}. All profiles synchronized.";
+            StatusMessageText.Text = $"Batch Query execution loop completed safely at {DateTime.Now:HH:mm:ss}. All profiles synchronized.";
             EngineSchedulerText.Text = "Scheduler Status: Idle";
         }
 
@@ -180,54 +183,88 @@ namespace FlyNotify.Views
                 // Verify that there is at least one active selected record highlighting the view
                 if (FlightDataGrid.SelectedItems.Count > 0)
                 {
-                    int totalSelectedCount = FlightDataGrid.SelectedItems.Count;
-                    string warningMessage = totalSelectedCount == 1
-                        ? "Are you sure you want to permanently delete the selected flight tracking profile?"
-                        : $"Are you sure you want to permanently delete all {totalSelectedCount} selected flight tracking profiles?";
+                    /*
+                        Because deleting items directly out of an active collection while WPF 
+                        loops through SelectedItems causes collection mutation errors, we cache 
+                        the targeting elements into a temporary list structure first.
+                    */
+                    var targetsToRemove = new System.Collections.Generic.List<FlightProfile>();
 
-                    // Standard systemic message query validation block
-                    MessageBoxResult decision = MessageBox.Show(
-                        warningMessage,
-                        "Confirm Profile Deletion",
-                        MessageBoxButton.YesNo,
-                        MessageBoxImage.Question
-                    );
-
-                    if (decision == MessageBoxResult.Yes)
+                    foreach (var selectedItem in FlightDataGrid.SelectedItems)
                     {
-                        /*
-                            Because deleting items directly out of an active collection while WPF 
-                            loops through SelectedItems causes collection mutation errors, we cache 
-                            the targeting elements into a temporary list structure first.
-                        */
-                        var targetsToRemove = new System.Collections.Generic.List<FlightProfile>();
-
-                        foreach (var selectedItem in FlightDataGrid.SelectedItems)
+                        if (selectedItem is FlightProfile profile)
                         {
-                            if (selectedItem is FlightProfile profile)
-                            {
-                                targetsToRemove.Add(profile);
-                            }
+                            targetsToRemove.Add(profile);
                         }
-
-                        // Remove the targeted records directly from the bound ObservableCollection
-                        foreach (var target in targetsToRemove)
-                        {
-                            MonitoredFlights.Remove(target);
-                        }
-
-                        // Commit the cleaned data matrix directly to your AppData user configuration file
-                        FlightProfilePersistence.SaveProfiles(MonitoredFlights);
                     }
-                    else
+
+                    // Remove the targeted records directly from the bound ObservableCollection
+                    foreach (var target in targetsToRemove)
                     {
-                        /*
-                            If the user selects 'No', we mark the event routing argument as Handled.
-                            This tells WPF to cancel the action completely, protecting the row data.
-                        */
-                        e.Handled = true;
+                        MonitoredFlights.Remove(target);
                     }
+
+                    // Commit the cleaned data matrix directly to your AppData user configuration file
+                    FlightProfilePersistence.SaveProfiles(MonitoredFlights);
                 }
+            }
+        }
+
+        /*
+            Helper method to show the FlightProfileDialog and update the edited profile.
+        */
+        private void EditProfile(FlightProfile profile)
+        {
+            FlightProfileDialog dialog = new(profile)
+            {
+                Owner = this
+            };
+
+            if (dialog.ShowDialog() is true && dialog.TargetProfile != null)
+            {
+                int index = MonitoredFlights.IndexOf(profile);
+                if (index >= 0)
+                {
+                    MonitoredFlights[index] = dialog.TargetProfile;
+                    FlightProfilePersistence.SaveProfiles(MonitoredFlights);
+                }
+            }
+        }
+
+        private void DataGridRow_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            // If the user double-clicked on interactive elements like the links, avoid triggering edit
+            if (e.OriginalSource is DependencyObject originalSource)
+            {
+                if (originalSource is TextBlock tb && (tb.Text == "Qantas" || tb.Text == "ExpertFlyer" || tb.Text == "|"))
+                {
+                    return;
+                }
+            }
+
+            if (sender is DataGridRow row && row.DataContext is FlightProfile profile)
+            {
+                EditProfile(profile);
+            }
+        }
+
+        /*
+            Right-click Context Menu Event Handlers
+        */
+        private void EditProfile_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuItem menuItem && menuItem.DataContext is FlightProfile profile)
+            {
+                EditProfile(profile);
+            }
+        }
+
+        private void DeleteProfile_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuItem menuItem && menuItem.DataContext is FlightProfile profile)
+            {
+                MonitoredFlights.Remove(profile);
+                FlightProfilePersistence.SaveProfiles(MonitoredFlights);
             }
         }
     }

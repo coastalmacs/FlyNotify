@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
@@ -21,7 +21,7 @@ namespace FlyNotify.Models
         private static readonly string StorageFile = Path.Combine(StorageDirectory, "flights.json");
 
         // Statically structured serialization configuration settings
-        private static readonly JsonSerializerOptions SerializationOptions = new JsonSerializerOptions
+        private static readonly JsonSerializerOptions SerializationOptions = new()
         {
             WriteIndented = true,
             AllowTrailingCommas = true
@@ -61,18 +61,18 @@ namespace FlyNotify.Models
                 // Evaluate file visibility boundaries prior to initializing parsing operations
                 if (!File.Exists(StorageFile))
                 {
-                    return new List<FlightProfile>();
+                    return [];
                 }
 
                 string jsonPayload = File.ReadAllText(StorageFile, System.Text.Encoding.UTF8);
                 List<FlightProfile>? recoveredProfiles = JsonSerializer.Deserialize<List<FlightProfile>>(jsonPayload, SerializationOptions);
 
-                return recoveredProfiles ?? new List<FlightProfile>();
+                return recoveredProfiles ?? [];
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[Persistence Load Failure]: {ex.Message}");
-                return new List<FlightProfile>();
+                return [];
             }
         }
     }

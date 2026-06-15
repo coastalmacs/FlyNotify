@@ -1,35 +1,234 @@
-﻿using System;
+using System;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Windows.Media.Imaging;
 
 namespace FlyNotify.Models
 {
-    public class FlightProfile
+    public class FlightProfile : System.ComponentModel.INotifyPropertyChanged
     {
-        // Required from user
-        public required string DepartureAirport { get; set; }
-        public required string ArrivalAirport { get; set; }
-        public DateTime TravelDate { get; set; }
-        public int PassengerCount { get; set; } = 1;
+        private string _departureAirport = "";
+        private string _arrivalAirport = "";
+        private DateTime _travelDate;
+        private DateTime _travelEndDate;
+        private int _passengerCount = 1;
+        private CabinClasses _selectedCabins = CabinClasses.Business;
+        private string _flightNumber = "TDB";
+        private string _departureTime = "TBD";
+        private string _arrivalTime = "TBD";
+        private string _duration = "TBD";
+        private string _targetCabin = "TBD";
+        private string _availabilityStatus = "TBD";
+        private DateTime _lastChecked = DateTime.MinValue;
+
+        public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
+
+        /*
+            Triggers WPF data binding updates for specific property path listeners.
+        */
+        protected virtual void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(propertyName));
+        }
+
+        /*
+            Updates field values securely and triggers bound UI element redraw requests.
+        */
+        protected bool SetField<T>(ref T field, T value, string propertyName)
+        {
+            if (System.Collections.Generic.EqualityComparer<T>.Default.Equals(field, value))
+            {
+                return false;
+            }
+            field = value;
+            OnPropertyChanged(propertyName);
+            return true;
+        }
+
+        public required string DepartureAirport
+        {
+            get
+            {
+                return _departureAirport;
+            }
+            set
+            {
+                SetField(ref _departureAirport, value, nameof(DepartureAirport));
+            }
+        }
+
+        public required string ArrivalAirport
+        {
+            get
+            {
+                return _arrivalAirport;
+            }
+            set
+            {
+                SetField(ref _arrivalAirport, value, nameof(ArrivalAirport));
+            }
+        }
+
+        public DateTime TravelDate
+        {
+            get
+            {
+                return _travelDate;
+            }
+            set
+            {
+                if (SetField(ref _travelDate, value, nameof(TravelDate)))
+                {
+                    OnPropertyChanged(nameof(TravelDateString));
+                    OnPropertyChanged(nameof(FullScheduleDisplay));
+                }
+            }
+        }
+
+        public DateTime TravelEndDate
+        {
+            get
+            {
+                return _travelEndDate == DateTime.MinValue ? TravelDate : _travelEndDate;
+            }
+            set
+            {
+                if (_travelEndDate != value)
+                {
+                    _travelEndDate = value;
+                    OnPropertyChanged(nameof(TravelEndDate));
+                    OnPropertyChanged(nameof(TravelEndDateString));
+                    OnPropertyChanged(nameof(FullScheduleDisplay));
+                }
+            }
+        }
+
+        public int PassengerCount
+        {
+            get
+            {
+                return _passengerCount;
+            }
+            set
+            {
+                SetField(ref _passengerCount, value, nameof(PassengerCount));
+            }
+        }
 
         [JsonIgnore]
-        public CabinClasses SelectedCabins { get; set; } = CabinClasses.Business;
+        public CabinClasses SelectedCabins
+        {
+            get
+            {
+                return _selectedCabins;
+            }
+            set
+            {
+                if (SetField(ref _selectedCabins, value, nameof(SelectedCabins)))
+                {
+                    OnPropertyChanged(nameof(CabinClass));
+                }
+            }
+        }
 
-        // Scraped by system
-        public string FlightNumber { get; set; } = "TDB";
-        public  string DepartureTime { get; set; } = "TBD";
-        public  string ArrivalTime { get; set; } = "TDB";
-        public  string Duration { get; set; } = "TBD";
-        public string TargetCabin { get; set; } = "TBD";
-        public required string AvailabilityStatus { get; set; } = "TBD";
-        public DateTime LastChecked { get; set; } = DateTime.MinValue;
+        public string FlightNumber
+        {
+            get
+            {
+                return _flightNumber;
+            }
+            set
+            {
+                SetField(ref _flightNumber, value, nameof(FlightNumber));
+            }
+        }
+
+        public string DepartureTime
+        {
+            get
+            {
+                return _departureTime;
+            }
+            set
+            {
+                if (SetField(ref _departureTime, value, nameof(DepartureTime)))
+                {
+                    OnPropertyChanged(nameof(FullScheduleDisplay));
+                }
+            }
+        }
+
+        public string ArrivalTime
+        {
+            get
+            {
+                return _arrivalTime;
+            }
+            set
+            {
+                if (SetField(ref _arrivalTime, value, nameof(ArrivalTime)))
+                {
+                    OnPropertyChanged(nameof(FullScheduleDisplay));
+                }
+            }
+        }
+
+        public string Duration
+        {
+            get
+            {
+                return _duration;
+            }
+            set
+            {
+                SetField(ref _duration, value, nameof(Duration));
+            }
+        }
+
+        public string TargetCabin
+        {
+            get
+            {
+                return _targetCabin;
+            }
+            set
+            {
+                SetField(ref _targetCabin, value, nameof(TargetCabin));
+            }
+        }
+
+        public required string AvailabilityStatus
+        {
+            get
+            {
+                return _availabilityStatus;
+            }
+            set
+            {
+                SetField(ref _availabilityStatus, value, nameof(AvailabilityStatus));
+            }
+        }
+
+        public DateTime LastChecked
+        {
+            get
+            {
+                return _lastChecked;
+            }
+            set
+            {
+                if (SetField(ref _lastChecked, value, nameof(LastChecked)))
+                {
+                    OnPropertyChanged(nameof(LastCheckedDisplay));
+                }
+            }
+        }
 
         public string CabinClass
         {
             get
             {
-                return SelectedCabins.ToQantasString();
+                return SelectedCabins.ToFareClassCode();
             }
             set
             {
@@ -40,21 +239,21 @@ namespace FlyNotify.Models
                 {
                     string normalized = value.ToUpper();
 
-                    if (normalized.Contains("ECONOMY") && !normalized.Contains("PREMIUM"))
+                    if (normalized.Contains('F') || normalized.Contains("FIRST"))
                     {
-                        parsedFlags |= CabinClasses.Economy;
+                        parsedFlags |= CabinClasses.First;
                     }
-                    if (normalized.Contains("PREMIUM"))
-                    {
-                        parsedFlags |= CabinClasses.PremiumEconomy;
-                    }
-                    if (normalized.Contains("BUSINESS"))
+                    if (normalized.Contains('J') || normalized.Contains("BUSINESS"))
                     {
                         parsedFlags |= CabinClasses.Business;
                     }
-                    if (normalized.Contains("FIRST"))
+                    if (normalized.Contains('W') || normalized.Contains("PREMIUM"))
                     {
-                        parsedFlags |= CabinClasses.First;
+                        parsedFlags |= CabinClasses.PremiumEconomy;
+                    }
+                    if (normalized.Contains('Y') || (normalized.Contains("ECONOMY") && !normalized.Contains("PREMIUM")))
+                    {
+                        parsedFlags |= CabinClasses.Economy;
                     }
                 }
 
@@ -65,20 +264,57 @@ namespace FlyNotify.Models
 
         public string TravelDateString
         {
-            get { return TravelDate.ToString("yyyy-MM-dd"); } 
+            get
+            {
+                return TravelDate.ToString("yyyy-MM-dd");
+            }
+        }
+
+        public string TravelEndDateString
+        {
+            get
+            {
+                return TravelEndDate.ToString("yyyy-MM-dd");
+            }
+        }
+
+        public string GetFormattedDateRange()
+        {
+            if (TravelDate == TravelEndDate)
+            {
+                return TravelDate.ToString("d MMM yyyy");
+            }
+
+            if (TravelDate.Year == TravelEndDate.Year)
+            {
+                if (TravelDate.Month == TravelEndDate.Month)
+                {
+                    return $"{TravelDate.Day}-{TravelEndDate.Day} {TravelDate:MMM yyyy}";
+                }
+                else
+                {
+                    return $"{TravelDate:d MMM} - {TravelEndDate:d MMM} {TravelDate:yyyy}";
+                }
+            }
+            else
+            {
+                return $"{TravelDate:d MMM yyyy} - {TravelEndDate:d MMM yyyy}";
+            }
         }
 
         public string FullScheduleDisplay
         {
             get
             {
+                string dateRange = GetFormattedDateRange();
+
                 if (DepartureTime == "TBD" || ArrivalTime == "TBD")
                 {
-                    return $"{TravelDateString}";
+                    return dateRange;
                 }
                 else
                 {
-                    return $"{TravelDateString} ({DepartureTime} - {ArrivalTime})";
+                    return $"{dateRange} ({DepartureTime}-{ArrivalTime})";
                 }
             }
         }
@@ -93,7 +329,7 @@ namespace FlyNotify.Models
                 }
                 else
                 {
-                    return LastChecked.ToString("yyyy-MM-dd HH:mm:ss");
+                    return LastChecked.ToString("yyyy-MM-dd HH:mm");
                 }
             }
         }
@@ -104,7 +340,7 @@ namespace FlyNotify.Models
         */
         public string BuildQantasQueryUrl()
         {
-            string dateRangeParam = $"{TravelDateString}I{TravelDateString}"; // Spec date layout requirement
+            string dateRangeParam = $"{TravelDateString}I{TravelEndDateString}"; // Spec date layout requirement
 
             var urlBuilder = new StringBuilder("https://flightrewardfinder.qantas.com/");
             urlBuilder.Append($"?o={Uri.EscapeDataString(DepartureAirport)}");

@@ -1,7 +1,7 @@
-﻿<Window x:Class="FlyNotify.Views.AddFlightDialog"
+<Window x:Class="FlyNotify.Views.FlightProfileDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Add Flight Profile" 
+        Title="Edit Flight Profile" 
         Height="480" 
         Width="640"
         ResizeMode="NoResize"
@@ -9,6 +9,7 @@
         Background="#F9F9F9"
         FontFamily="Segoe UI"
         FontSize="13"
+        Icon="/Assets/app.ico"
         FocusManager.FocusedElement="{Binding ElementName=TxtDeparture}"
         >
 
@@ -60,7 +61,7 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Margin="0,0,0,20">
-            <TextBlock Text="NEW FLIGHT PROFILE" 
+            <TextBlock Text="EDIT FLIGHT PROFILE" 
                        FontSize="16" 
                        FontWeight="Black" 
                        Foreground="{StaticResource JetCharcoalBrush}"/>
@@ -93,9 +94,20 @@
                 </Grid>
 
                 <Grid Margin="0,15,0,0">
-                    <StackPanel>
-                        <Label Content="Travel Date" Style="{StaticResource FormLabelStyle}"/>
-                        <DatePicker x:Name="DpTravelDate" Padding="5" Width="200" HorizontalAlignment="Left" />
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="20"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0">
+                        <Label Content="Travel Start Date" Style="{StaticResource FormLabelStyle}"/>
+                        <DatePicker x:Name="DpTravelStartDate" Padding="5" HorizontalAlignment="Stretch" SelectedDateChanged="DpTravelStartDate_SelectedDateChanged" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2">
+                        <Label Content="Travel End Date" Style="{StaticResource FormLabelStyle}"/>
+                        <DatePicker x:Name="DpTravelEndDate" Padding="5" HorizontalAlignment="Stretch" SelectedDateChanged="DpTravelEndDate_SelectedDateChanged" />
                     </StackPanel>
                 </Grid>
 
