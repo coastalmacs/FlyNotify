@@ -308,7 +308,7 @@ namespace FlyNotify.Models
             {
                 string dateRange = GetFormattedDateRange();
 
-                if (DepartureTime == "TBD" || ArrivalTime == "TBD")
+                if (DepartureTime == "TBD" || ArrivalTime == "TBD" || DepartureTime == "--:--" || ArrivalTime == "--:--")
                 {
                     return dateRange;
                 }
@@ -318,6 +318,7 @@ namespace FlyNotify.Models
                 }
             }
         }
+
 
         public string LastCheckedDisplay
         {

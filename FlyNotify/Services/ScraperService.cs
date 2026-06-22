@@ -79,7 +79,7 @@ namespace FlyNotify.Services
                 int flightsIndex = payload.IndexOf("\"flights\":[");
                 if (flightsIndex < 0)
                 {
-                    UpdateProfileStatus(profile, "No Flights Found", "NONE", "--:--", "--:--", "--h --m");
+                    UpdateProfileStatus(profile, "TBD", "TBD", "TBD", "TBD", "TBD");
                     return;
                 }
 
@@ -91,7 +91,7 @@ namespace FlyNotify.Services
                 int paginationIndex = searchSub.IndexOf(",\"pagination\"");
                 if (paginationIndex < 0)
                 {
-                    UpdateProfileStatus(profile, "Parse Error (End)", "ERR", "--:--", "--:--", "--h --m");
+                    UpdateProfileStatus(profile, "Parse Error (End)", "TBD", "TBD", "TBD", "TBD");
                     return;
                 }
 
@@ -105,7 +105,7 @@ namespace FlyNotify.Services
                 var flightsArray = doc.RootElement;
                 if (flightsArray.ValueKind != JsonValueKind.Array)
                 {
-                    UpdateProfileStatus(profile, "Parse Error (Array)", "ERR", "--:--", "--:--", "--h --m");
+                    UpdateProfileStatus(profile, "Parse Error (Array)", "TBD", "TBD", "TBD", "TBD");
                     return;
                 }
 
@@ -145,7 +145,7 @@ namespace FlyNotify.Services
 
                 if (matchedFlight == null)
                 {
-                    UpdateProfileStatus(profile, "No Match Found", "NONE", "--:--", "--:--", "--h --m");
+                    UpdateProfileStatus(profile, "TBD", "TBD", "TBD", "TBD", "TBD");
                     return;
                 }
 
@@ -248,7 +248,7 @@ namespace FlyNotify.Services
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[Scraper Exception Core]: {ex.Message}");
-                UpdateProfileStatus(profile, "Scrape Error", "ERR", "--:--", "--:--", "--h --m");
+                UpdateProfileStatus(profile, "Scrape Error", "TBD", "TBD", "TBD", "TBD");
             }
         }
 
