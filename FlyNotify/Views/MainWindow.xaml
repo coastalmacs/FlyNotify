@@ -61,9 +61,12 @@
             <Setter Property="Margin" Value="5,0" />
         </Style>
 
-        <ContextMenu x:Key="RowContextMenu">
+        <ContextMenu x:Key="RowContextMenu" Opened="RowContextMenu_Opened">
             <MenuItem Click="EditProfile_Click" Header="Edit Profile" />
             <MenuItem Click="DeleteProfile_Click" Header="Delete Profile" />
+            <Separator />
+            <MenuItem Click="CopyQfQuery_Click" Header="Copy QF query to clipboard" />
+            <MenuItem Click="CopyEfQuery_Click" Header="Copy EF query to clipboard" />
         </ContextMenu>
     </Window.Resources>
 
@@ -134,7 +137,9 @@
             HorizontalGridLinesBrush="#E5E5E5"
             IsReadOnly="True"
             PreviewKeyDown="FlightDataGrid_PreviewKeyDown"
-            RowHeaderWidth="0">
+            RowHeaderWidth="0"
+            SelectionMode="Extended"
+            SelectionChanged="FlightDataGrid_SelectionChanged">
 
             <DataGrid.ColumnHeaderStyle>
                 <Style TargetType="DataGridColumnHeader">

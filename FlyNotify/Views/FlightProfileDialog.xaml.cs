@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using FlyNotify.Models;
+using MessageBox = System.Windows.MessageBox;
 
 namespace FlyNotify.Views
 {
@@ -196,6 +197,7 @@ namespace FlyNotify.Views
                 Duration = isKeyUnchanged ? _originalProfile!.Duration : "TBD",
                 TargetCabin = isKeyUnchanged ? _originalProfile!.TargetCabin : "TBD",
                 AvailabilityStatus = isKeyUnchanged ? _originalProfile!.AvailabilityStatus : "TBD",
+                DetailedStatus = isKeyUnchanged ? _originalProfile!.DetailedStatus : "TBD",
                 LastChecked = isKeyUnchanged ? _originalProfile!.LastChecked : DateTime.MinValue
             };
 

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace FlyNotify.Models
 {
@@ -27,28 +28,109 @@ namespace FlyNotify.Models
             Maps selected flags to a comma-separated list of official 
             ExpertFlyer single-letter award fare bucket codes.
         */
-        public static string ToFareBucketCode(this CabinClasses cabins)
+        public static string ToFareBucketCode(this CabinClasses cabins, string? airlineCode = null)
         {
             var buckets = new List<string>();
+            string airline = airlineCode?.ToUpper() ?? "DEFAULT";
 
             if (cabins.HasFlag(CabinClasses.First))
             {
-                buckets.Add("P"); // P corresponds with First class
+                switch (airline)
+                {
+                    case "QF":
+                        buckets.AddRange(new[] { "F", "A", "P" });
+                        break;
+                    case "BA":
+                        buckets.AddRange(new[] { "F", "A", "Z" });
+                        break;
+                    case "AA":
+                        buckets.AddRange(new[] { "F", "A", "Z" });
+                        break;
+                    case "JL":
+                        buckets.AddRange(new[] { "F", "A", "Z" });
+                        break;
+                    case "EK":
+                        buckets.AddRange(new[] { "F", "A", "P", "Z" });
+                        break;
+                    default:
+                        buckets.Add("P");
+                        break;
+                }
             }
             if (cabins.HasFlag(CabinClasses.Business))
             {
-                buckets.Add("U"); // U corresponds with Business class
+                switch (airline)
+                {
+                    case "QF":
+                        buckets.AddRange(new[] { "J", "C", "D", "I", "U" });
+                        break;
+                    case "BA":
+                        buckets.AddRange(new[] { "J", "C", "D", "I", "R", "U" });
+                        break;
+                    case "AA":
+                        buckets.AddRange(new[] { "J", "C", "D", "I", "R", "U" });
+                        break;
+                    case "JL":
+                        buckets.AddRange(new[] { "J", "C", "D", "I", "U", "X" });
+                        break;
+                    case "EK":
+                        buckets.AddRange(new[] { "J", "C", "D", "I", "O" });
+                        break;
+                    default:
+                        buckets.Add("U");
+                        break;
+                }
             }
             if (cabins.HasFlag(CabinClasses.PremiumEconomy))
             {
-                buckets.Add("Z"); // Standard industry Premium Economy award code
+                switch (airline)
+                {
+                    case "QF":
+                        buckets.AddRange(new[] { "W", "R", "T", "Z" });
+                        break;
+                    case "BA":
+                        buckets.AddRange(new[] { "W", "E", "T", "P" });
+                        break;
+                    case "AA":
+                        buckets.AddRange(new[] { "W", "P", "X" });
+                        break;
+                    case "JL":
+                        buckets.AddRange(new[] { "W", "E", "P" });
+                        break;
+                    case "EK":
+                        buckets.AddRange(new[] { "W", "E", "T" });
+                        break;
+                    default:
+                        buckets.Add("Z");
+                        break;
+                }
             }
             if (cabins.HasFlag(CabinClasses.Economy))
             {
-                buckets.Add("X"); // Standard industry Economy award code
+                switch (airline)
+                {
+                    case "QF":
+                        buckets.AddRange(new[] { "Y", "B", "E", "H", "K", "L", "M", "N", "O", "Q", "S", "V", "X" });
+                        break;
+                    case "BA":
+                        buckets.AddRange(new[] { "Y", "B", "H", "K", "M", "L", "V", "S", "N", "Q", "O", "G", "X" });
+                        break;
+                    case "AA":
+                        buckets.AddRange(new[] { "Y", "B", "E", "G", "H", "K", "L", "M", "N", "O", "Q", "S", "T", "V" });
+                        break;
+                    case "JL":
+                        buckets.AddRange(new[] { "Y", "B", "H", "K", "L", "M", "N", "Q", "R", "S", "T", "V" });
+                        break;
+                    case "EK":
+                        buckets.AddRange(new[] { "Y", "B", "E", "G", "H", "K", "L", "M", "N", "Q", "R", "S", "T", "U", "V", "W", "X" });
+                        break;
+                    default:
+                        buckets.Add("X");
+                        break;
+                }
             }
 
-            return string.Join(",", buckets);
+            return string.Join(",", buckets.Distinct());
         }
 
         /*

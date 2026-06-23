@@ -1,0 +1,30 @@
+# Comparative Fare Bucket Guide
+
+Code  | Qantas (QF)                    | British Airways (BA)           | American Airlines (AA)              | Japan Airlines (JL)  | Emirates (EK)
+------+--------------------------------+--------------------------------+-------------------------------------+----------------------+------------------------------------
+A     | First                          | First                          | First (Upgrade / Restricted)        | First                | First
+B     | Economy                        | Economy                        | Basic Economy                       | Economy              | Economy
+C     | Business                       | Club Europe/World              | Business (Upgrade)                  | Business             | Business
+D     | Business                       | Club Europe/World              | Business                            | Business             | Business (Saver Award/Upgrade)
+E     | Economy                        | World Traveller Plus           | Coach (Employee / Changes)          | Premium Economy      | Economy
+F     | First                          | First                          | First (AAnytime Award)              | First                | First
+G     | -                              | Economy                        | Economy                             | -                    | Economy
+H     | Economy                        | Economy                        | Economy                             | Economy              | Economy
+I     | Discount Business              | Club Europe/World              | Business                            | Discount Business    | Business
+J     | Business                       | Club Europe/World              | Business (AAnytime Award)           | Business             | Business
+K     | Economy                        | Economy                        | Economy                             | Economy              | Economy
+L     | Economy                        | Economy                        | Economy                             | Economy              | Economy
+M     | Economy                        | Economy                        | Economy                             | Economy              | Economy
+N     | Economy                        | Economy                        | Economy                             | Economy              | Economy (Saver Award)
+O     | Economy                        | Economy                        | Economy                             | -                    | Business (Non-partner/Flex Award)
+P     | First (Award & Upgrade)        | Premium Econ (Award/Upgrade)   | Premium Economy                     | Premium Economy      | First
+Q     | Economy                        | Economy                        | Economy                             | Economy              | Economy
+R     | Premium Economy                | Club Europe/World              | Business                            | Economy              | Economy
+S     | Economy                        | Economy                        | Economy                             | Economy              | Economy
+T     | Premium Economy                | World Traveller Plus           | Coach (Partner Award)               | Economy              | Economy
+U     | Business (Award & Upgrade)     | Business (Award & Upgrade)     | Business (Partner Award)            | Business             | Economy
+V     | Economy                        | Economy (Gold Elites Award)    | Economy                             | Economy              | Economy
+W     | Premium Economy                | World Traveller Plus           | Premium Econ (AAnytime Award)       | Premium Economy      | Economy (Non-partner/Flex Award)
+X     | Economy (Award)                | Economy (Award)                | Premium Econ (Partner Award)        | Business             | Economy
+Y     | Economy                        | Economy                        | Coach (AAnytime Award)              | Economy              | Economy
+Z     | Premium Econ (Award/Upgrade)   | First (Award & Upgrade)        | First (Partner Award)               | First                | First (Flex/Saver Award/Upgrade)

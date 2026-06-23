@@ -13,12 +13,13 @@ namespace FlyNotify.Models
         private DateTime _travelEndDate;
         private int _passengerCount = 1;
         private CabinClasses _selectedCabins = CabinClasses.Business;
-        private string _flightNumber = "TDB";
+        private string _flightNumber = "TBD";
         private string _departureTime = "TBD";
         private string _arrivalTime = "TBD";
         private string _duration = "TBD";
         private string _targetCabin = "TBD";
         private string _availabilityStatus = "TBD";
+        private string _detailedStatus = "TBD";
         private DateTime _lastChecked = DateTime.MinValue;
 
         public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
@@ -209,6 +210,18 @@ namespace FlyNotify.Models
             }
         }
 
+        public string DetailedStatus
+        {
+            get
+            {
+                return _detailedStatus;
+            }
+            set
+            {
+                SetField(ref _detailedStatus, value, nameof(DetailedStatus));
+            }
+        }
+
         public DateTime LastChecked
         {
             get
@@ -345,13 +358,35 @@ namespace FlyNotify.Models
 
             var urlBuilder = new StringBuilder("https://flightrewardfinder.qantas.com/");
             urlBuilder.Append($"?o={Uri.EscapeDataString(DepartureAirport)}");
-            urlBuilder.Append($"&d={Uri.EscapeDataString(ArrivalAirport)}");
+            string arrivalParam = ArrivalAirport.Equals("ALL", StringComparison.OrdinalIgnoreCase) ? "*" : ArrivalAirport;
+            urlBuilder.Append($"&d={Uri.EscapeDataString(arrivalParam)}");
             urlBuilder.Append($"&c={Uri.EscapeDataString(SelectedCabins.ToQantasString())}"); // e.g. "Business,First"
             urlBuilder.Append($"&p={PassengerCount}");
             urlBuilder.Append($"&dr={dateRangeParam}");
             urlBuilder.Append("&pg=1");
 
             return urlBuilder.ToString();
+        }
+
+        private string? GetAirlineCode()
+        {
+            if (string.IsNullOrEmpty(FlightNumber))
+            {
+                return null;
+            }
+
+            string upper = FlightNumber.Trim().ToUpper();
+            if (upper == "TBD" || upper == "TDB" || upper == "QF000" || upper == "QF00")
+            {
+                return null;
+            }
+
+            if (upper.Length >= 2 && char.IsLetter(upper[0]) && char.IsLetter(upper[1]))
+            {
+                return upper.Substring(0, 2);
+            }
+
+            return null;
         }
 
         /*
@@ -361,14 +396,32 @@ namespace FlyNotify.Models
         public string BuildExpertFlyerQueryUrl()
         {
             string dateTimeParam = $"{TravelDateString}T00%3A00"; // Strict spec timestamp
-            string classFilterParam = SelectedCabins.ToFareBucketCode(); // e.g. "U,P"
+            string classFilterParam = SelectedCabins.ToFareBucketCode(GetAirlineCode()); // e.g. "U,P"
 
             var urlBuilder = new StringBuilder("https://www.expertflyer.com/air/availability/results");
             urlBuilder.Append($"?origin={Uri.EscapeDataString(DepartureAirport)}");
-            urlBuilder.Append($"&destination={Uri.EscapeDataString(ArrivalAirport)}");
+            string arrivalParam = ArrivalAirport.Equals("ALL", StringComparison.OrdinalIgnoreCase) ? "*" : ArrivalAirport;
+            urlBuilder.Append($"&destination={Uri.EscapeDataString(arrivalParam)}");
             urlBuilder.Append($"&departureDateTime={dateTimeParam}");
-            urlBuilder.Append("&returnDateTime=");
-            urlBuilder.Append("&alliance=none"); // Mandatory spec parameter
+
+            // Omit returnDateTime if it does not exist (not a range/round-trip check)
+            if (TravelEndDate.Date > TravelDate.Date)
+            {
+                urlBuilder.Append($"&returnDateTime={TravelEndDateString}T00%3A00");
+            }
+
+            // Set alliance and airline code parameters based on presence of a two-letter airline code
+            string? airlineCode = GetAirlineCode();
+            if (airlineCode != null)
+            {
+                urlBuilder.Append("&alliance=none");
+                urlBuilder.Append($"&airLineCodes={Uri.EscapeDataString(airlineCode)}");
+            }
+            else
+            {
+                urlBuilder.Append("&alliance=*O");
+            }
+
             urlBuilder.Append("&excludeCodeshares=false"); // Mandatory spec parameter
 
             if (!string.IsNullOrEmpty(classFilterParam))
@@ -376,7 +429,7 @@ namespace FlyNotify.Models
                 urlBuilder.Append($"&classFilter={Uri.EscapeDataString(classFilterParam)}");
             }
 
-            urlBuilder.Append("&pcc=USA+%28Default%29&resultsDisplay=single"); // Mandatory spec appendix payload
+            urlBuilder.Append("&pcc=Australia&resultsDisplay=single"); // Mandatory spec appendix payload
 
             return urlBuilder.ToString();
         }
