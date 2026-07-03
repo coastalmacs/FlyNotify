@@ -395,8 +395,29 @@ namespace FlyNotify.Models
         */
         public string BuildExpertFlyerQueryUrl()
         {
-            string dateTimeParam = $"{TravelDateString}T00%3A00"; // Strict spec timestamp
-            string classFilterParam = SelectedCabins.ToFareBucketCode(GetAirlineCode()); // e.g. "U,P"
+            int span = (TravelEndDate.Date - TravelDate.Date).Days;
+            DateTime targetDate = TravelDate.Date;
+            string departureExactDateParam = "";
+
+            if (span > 0)
+            {
+                targetDate = TravelDate.Date.AddDays(span / 2);
+                if (span == 1 || span == 2)
+                {
+                    departureExactDateParam = "&departureExactDate=plusminus1";
+                }
+                else if (span == 3 || span == 4)
+                {
+                    departureExactDateParam = "&departureExactDate=plusminus2";
+                }
+                else
+                {
+                    departureExactDateParam = "&departureExactDate=plusminus3";
+                }
+            }
+
+            string dateTimeParam = $"{targetDate:yyyy-MM-dd}T00%3A00";
+            string classFilterParam = SelectedCabins.ToFareBucketCode(GetAirlineCode());
 
             var urlBuilder = new StringBuilder("https://www.expertflyer.com/air/availability/results");
             urlBuilder.Append($"?origin={Uri.EscapeDataString(DepartureAirport)}");
@@ -404,10 +425,9 @@ namespace FlyNotify.Models
             urlBuilder.Append($"&destination={Uri.EscapeDataString(arrivalParam)}");
             urlBuilder.Append($"&departureDateTime={dateTimeParam}");
 
-            // Omit returnDateTime if it does not exist (not a range/round-trip check)
-            if (TravelEndDate.Date > TravelDate.Date)
+            if (!string.IsNullOrEmpty(departureExactDateParam))
             {
-                urlBuilder.Append($"&returnDateTime={TravelEndDateString}T00%3A00");
+                urlBuilder.Append(departureExactDateParam);
             }
 
             // Set alliance and airline code parameters based on presence of a two-letter airline code

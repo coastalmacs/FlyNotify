@@ -129,21 +129,36 @@ namespace FlyNotify.Views
                 StatusMessageText.Text = "Executing global background flight availability analysis batch query...";
                 EngineSchedulerText.Text = "Scheduler Status: Running";
 
-                var profilesToQuery = MonitoredFlights.ToList();
+                var profilesToQuery = MonitoredFlights
+                    .OrderByDescending(p => p.ArrivalAirport.Equals("ALL", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
                 var random = new Random();
+                int liveQueriesScraped = 0;
 
                 for (int i = 0; i < profilesToQuery.Count; i++)
                 {
                     var profile = profilesToQuery[i];
 
+                    // Skip network checks if covered by a wildcard search
+                    if (IsProfileCoveredByWildcard(profile, profilesToQuery))
+                    {
+                        StatusMessageText.Text = $"Skipping check for {profile.DepartureAirport} -> {profile.ArrivalAirport} (covered by ALL query)...";
+                        continue;
+                    }
+
                     /*
                         Apply random human-like delay between requests if querying live servers.
                     */
-                    if (i > 0 && isLive)
+                    if (liveQueriesScraped > 0 && isLive)
                     {
                         int delayMs = random.Next(2000, 5000);
                         StatusMessageText.Text = $"Waiting {delayMs / 1000.0:F1}s before next query to mimic human browsing behavior...";
                         await System.Threading.Tasks.Task.Delay(delayMs);
+                    }
+
+                    if (isLive)
+                    {
+                        liveQueriesScraped++;
                     }
 
                     StatusMessageText.Text = $"Scraping availability for route {profile.DepartureAirport} -> {profile.ArrivalAirport}...";
@@ -158,14 +173,6 @@ namespace FlyNotify.Views
 
                     if (profile.ArrivalAirport.Equals("ALL", StringComparison.OrdinalIgnoreCase))
                     {
-                        /*
-                            Remove wildcard search configuration once valid route options are found.
-                        */
-                        if (results.Count > 0)
-                        {
-                            MonitoredFlights.Remove(profile);
-                        }
-
                         foreach (var result in results)
                         {
                             string seatsDetail = result.AvailabilityStatus;
@@ -196,7 +203,47 @@ namespace FlyNotify.Views
                             }
                         }
 
-                        if (results.Count == 0)
+                        // Synchronize covered specific profiles that might not be in the results
+                        var coveredSpecifics = MonitoredFlights.Where(p => IsProfileCoveredByWildcard(p, new[] { profile })).ToList();
+                        foreach (var specific in coveredSpecifics)
+                        {
+                            var match = results.FirstOrDefault(r =>
+                                r.ArrivalAirport.Equals(specific.ArrivalAirport, StringComparison.OrdinalIgnoreCase) &&
+                                (specific.FlightNumber == "TBD" || r.FlightNumber.Equals(specific.FlightNumber, StringComparison.OrdinalIgnoreCase)));
+
+                            if (match != null)
+                            {
+                                specific.FlightNumber = match.FlightNumber;
+                                specific.DepartureTime = match.DepartureTime;
+                                specific.ArrivalTime = match.ArrivalTime;
+                                specific.Duration = match.Duration;
+                                specific.AvailabilityStatus = "Available";
+                                specific.DetailedStatus = match.DetailedStatus;
+                                specific.LastChecked = DateTime.Now;
+                            }
+                            else
+                            {
+                                specific.AvailabilityStatus = "Checked";
+                                specific.DetailedStatus = "No Classes Found";
+                                specific.FlightNumber = "TBD";
+                                specific.DepartureTime = "TBD";
+                                specific.ArrivalTime = "TBD";
+                                specific.Duration = "TBD";
+                                specific.LastChecked = DateTime.Now;
+                            }
+                        }
+
+                        if (results.Count > 0)
+                        {
+                            profile.AvailabilityStatus = "Available";
+                            profile.DetailedStatus = string.Join(" | ", results.Select(r => $"{r.ArrivalAirport}: {r.DetailedStatus}"));
+                            profile.FlightNumber = "TBD";
+                            profile.DepartureTime = "TBD";
+                            profile.ArrivalTime = "TBD";
+                            profile.Duration = "TBD";
+                            profile.LastChecked = DateTime.Now;
+                        }
+                        else
                         {
                             profile.AvailabilityStatus = "Checked";
                             profile.DetailedStatus = "No Classes Found";
@@ -430,10 +477,13 @@ namespace FlyNotify.Views
                 System.Collections.Generic.List<FlightProfile> profilesToQuery;
                 lock (MonitoredFlights)
                 {
-                    profilesToQuery = MonitoredFlights.ToList();
+                    profilesToQuery = MonitoredFlights
+                        .OrderByDescending(p => p.ArrivalAirport.Equals("ALL", StringComparison.OrdinalIgnoreCase))
+                        .ToList();
                 }
 
                 var random = new Random();
+                int liveQueriesScraped = 0;
 
                 for (int i = 0; i < profilesToQuery.Count; i++)
                 {
@@ -444,8 +494,23 @@ namespace FlyNotify.Views
 
                     var profile = profilesToQuery[i];
 
+                    bool isCovered = false;
+                    Dispatcher.Invoke(() =>
+                    {
+                        isCovered = IsProfileCoveredByWildcard(profile, profilesToQuery);
+                    });
+
+                    if (isCovered)
+                    {
+                        Dispatcher.Invoke(() =>
+                        {
+                            StatusMessageText.Text = $"Automated query: skipping {profile.DepartureAirport} -> {profile.ArrivalAirport} (covered by ALL query)...";
+                        });
+                        continue;
+                    }
+
                     // Spacing delay to avoid bot appearance
-                    if (i > 0)
+                    if (liveQueriesScraped > 0)
                     {
                         int delayMs = random.Next(2000, 5000);
                         Dispatcher.Invoke(() =>
@@ -462,6 +527,8 @@ namespace FlyNotify.Views
                             break;
                         }
                     }
+
+                    liveQueriesScraped++;
 
                     Dispatcher.Invoke(() =>
                     {
@@ -480,11 +547,6 @@ namespace FlyNotify.Views
                     {
                         if (profile.ArrivalAirport.Equals("ALL", StringComparison.OrdinalIgnoreCase))
                         {
-                            if (results.Count > 0)
-                            {
-                                MonitoredFlights.Remove(profile);
-                            }
-
                             foreach (var result in results)
                             {
                                 string seatsDetail = result.AvailabilityStatus;
@@ -515,7 +577,47 @@ namespace FlyNotify.Views
                                 }
                             }
 
-                            if (results.Count == 0)
+                            // Synchronize covered specific profiles that might not be in the results
+                            var coveredSpecifics = MonitoredFlights.Where(p => IsProfileCoveredByWildcard(p, new[] { profile })).ToList();
+                            foreach (var specific in coveredSpecifics)
+                            {
+                                var match = results.FirstOrDefault(r =>
+                                    r.ArrivalAirport.Equals(specific.ArrivalAirport, StringComparison.OrdinalIgnoreCase) &&
+                                    (specific.FlightNumber == "TBD" || r.FlightNumber.Equals(specific.FlightNumber, StringComparison.OrdinalIgnoreCase)));
+
+                                if (match != null)
+                                {
+                                    specific.FlightNumber = match.FlightNumber;
+                                    specific.DepartureTime = match.DepartureTime;
+                                    specific.ArrivalTime = match.ArrivalTime;
+                                    specific.Duration = match.Duration;
+                                    specific.AvailabilityStatus = "Available";
+                                    specific.DetailedStatus = match.DetailedStatus;
+                                    specific.LastChecked = DateTime.Now;
+                                }
+                                else
+                                {
+                                    specific.AvailabilityStatus = "Checked";
+                                    specific.DetailedStatus = "No Classes Found";
+                                    specific.FlightNumber = "TBD";
+                                    specific.DepartureTime = "TBD";
+                                    specific.ArrivalTime = "TBD";
+                                    specific.Duration = "TBD";
+                                    specific.LastChecked = DateTime.Now;
+                                }
+                            }
+
+                            if (results.Count > 0)
+                            {
+                                profile.AvailabilityStatus = "Available";
+                                profile.DetailedStatus = string.Join(" | ", results.Select(r => $"{r.ArrivalAirport}: {r.DetailedStatus}"));
+                                profile.FlightNumber = "TBD";
+                                profile.DepartureTime = "TBD";
+                                profile.ArrivalTime = "TBD";
+                                profile.Duration = "TBD";
+                                profile.LastChecked = DateTime.Now;
+                            }
+                            else
                             {
                                 profile.AvailabilityStatus = "Checked";
                                 profile.DetailedStatus = "No Classes Found";
@@ -859,6 +961,26 @@ namespace FlyNotify.Views
         private string GetProfileKey(FlightProfile profile)
         {
             return $"{profile.DepartureAirport.ToUpper()}-{profile.ArrivalAirport.ToUpper()}-{profile.TravelDate:yyyyMMdd}-{profile.FlightNumber.ToUpper()}-{profile.PassengerCount}-{profile.CabinClass}";
+        }
+
+        /*
+            Determines if a specific flight profile is logically covered by any active wildcard "ALL" query
+            in the currently running batch.
+        */
+        private bool IsProfileCoveredByWildcard(FlightProfile specific, System.Collections.Generic.IEnumerable<FlightProfile> activeProfiles)
+        {
+            if (specific.ArrivalAirport.Equals("ALL", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            return activeProfiles.Any(allProfile =>
+                allProfile.ArrivalAirport.Equals("ALL", StringComparison.OrdinalIgnoreCase) &&
+                allProfile.DepartureAirport.Equals(specific.DepartureAirport, StringComparison.OrdinalIgnoreCase) &&
+                allProfile.TravelDate.Date == specific.TravelDate.Date &&
+                allProfile.TravelEndDate.Date == specific.TravelEndDate.Date &&
+                allProfile.PassengerCount == specific.PassengerCount &&
+                (specific.SelectedCabins & allProfile.SelectedCabins) == specific.SelectedCabins);
         }
 
         /*

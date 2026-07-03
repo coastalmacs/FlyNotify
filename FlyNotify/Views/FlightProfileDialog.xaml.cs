@@ -123,6 +123,17 @@ namespace FlyNotify.Views
                 return;
             }
 
+            if ((DpTravelEndDate.SelectedDate.Value - DpTravelStartDate.SelectedDate.Value).Days > 6)
+            {
+                MessageBox.Show(
+                    "The travel date range cannot exceed 7 days. Please specify a valid date range.",
+                    "Date Range Configuration Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning
+                );
+                return;
+            }
+
             // 6. Compile active CheckBox selections into our type-safe bitwise flags container
             CabinClasses chosenCabins = CabinClasses.None;
 
@@ -227,6 +238,10 @@ namespace FlyNotify.Views
                 {
                     DpTravelEndDate.SelectedDate = DpTravelStartDate.SelectedDate;
                 }
+                else if ((DpTravelEndDate.SelectedDate.Value - DpTravelStartDate.SelectedDate.Value).Days > 6)
+                {
+                    DpTravelEndDate.SelectedDate = DpTravelStartDate.SelectedDate.Value.AddDays(6);
+                }
             }
         }
 
@@ -237,6 +252,10 @@ namespace FlyNotify.Views
                 if (DpTravelEndDate.SelectedDate.Value < DpTravelStartDate.SelectedDate.Value)
                 {
                     DpTravelStartDate.SelectedDate = DpTravelEndDate.SelectedDate;
+                }
+                else if ((DpTravelEndDate.SelectedDate.Value - DpTravelStartDate.SelectedDate.Value).Days > 6)
+                {
+                    DpTravelStartDate.SelectedDate = DpTravelEndDate.SelectedDate.Value.AddDays(-6);
                 }
             }
         }

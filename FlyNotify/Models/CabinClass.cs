@@ -53,7 +53,7 @@ namespace FlyNotify.Models
                         buckets.AddRange(new[] { "F", "A", "P", "Z" });
                         break;
                     default:
-                        buckets.Add("P");
+                        buckets.AddRange(new[] { "F", "A", "P", "Z" });
                         break;
                 }
             }
@@ -77,7 +77,7 @@ namespace FlyNotify.Models
                         buckets.AddRange(new[] { "J", "C", "D", "I", "O" });
                         break;
                     default:
-                        buckets.Add("U");
+                        buckets.AddRange(new[] { "J", "C", "D", "I", "R", "U", "X", "O" });
                         break;
                 }
             }
@@ -101,7 +101,7 @@ namespace FlyNotify.Models
                         buckets.AddRange(new[] { "W", "E", "T" });
                         break;
                     default:
-                        buckets.Add("Z");
+                        buckets.AddRange(new[] { "W", "R", "T", "Z", "E", "P", "X" });
                         break;
                 }
             }
@@ -125,7 +125,7 @@ namespace FlyNotify.Models
                         buckets.AddRange(new[] { "Y", "B", "E", "G", "H", "K", "L", "M", "N", "Q", "R", "S", "T", "U", "V", "W", "X" });
                         break;
                     default:
-                        buckets.Add("X");
+                        buckets.AddRange(new[] { "Y", "B", "E", "H", "K", "L", "M", "N", "O", "Q", "S", "V", "W", "X", "G", "R", "T", "U" });
                         break;
                 }
             }
