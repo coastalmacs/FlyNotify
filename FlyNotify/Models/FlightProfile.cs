@@ -70,6 +70,11 @@ namespace FlyNotify.Models
             }
         }
 
+        [JsonIgnore]
+        public bool IsWildcardOrRegion => 
+            ArrivalAirport.Equals("ALL", StringComparison.OrdinalIgnoreCase) || 
+            Enum.TryParse<TravelRegion>(ArrivalAirport, true, out _);
+
         public DateTime TravelDate
         {
             get

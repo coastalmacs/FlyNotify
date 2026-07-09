@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Windows;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Controls;
 using FlyNotify.Models;
@@ -130,7 +131,7 @@ namespace FlyNotify.Views
                 EngineSchedulerText.Text = "Scheduler Status: Running";
 
                 var profilesToQuery = MonitoredFlights
-                    .OrderByDescending(p => p.ArrivalAirport.Equals("ALL", StringComparison.OrdinalIgnoreCase))
+                    .OrderByDescending(p => p.IsWildcardOrRegion)
                     .ToList();
                 var random = new Random();
                 int liveQueriesScraped = 0;
@@ -163,15 +164,24 @@ namespace FlyNotify.Views
 
                     StatusMessageText.Text = $"Scraping availability for route {profile.DepartureAirport} -> {profile.ArrivalAirport}...";
 
-                    var results = await FlyNotify.Services.ScraperService.ExecuteScrapeAsync(profile, msg =>
+                    List<FlightProfile> results;
+                    try
                     {
-                        Dispatcher.Invoke(() =>
+                        results = await FlyNotify.Services.ScraperService.ExecuteScrapeAsync(profile, msg =>
                         {
-                            StatusMessageText.Text = $"[{profile.DepartureAirport} -> {profile.ArrivalAirport}] {msg}";
+                            Dispatcher.Invoke(() =>
+                            {
+                                StatusMessageText.Text = $"[{profile.DepartureAirport} -> {profile.ArrivalAirport}] {msg}";
+                            });
                         });
-                    });
+                    }
+                    catch (Exception ex)
+                    {
+                        StatusMessageText.Text = $"Batch query aborted due to error on route {profile.DepartureAirport} -> {profile.ArrivalAirport}: {ex.Message}";
+                        break;
+                    }
 
-                    if (profile.ArrivalAirport.Equals("ALL", StringComparison.OrdinalIgnoreCase))
+                    if (profile.IsWildcardOrRegion)
                     {
                         foreach (var result in results)
                         {
@@ -279,7 +289,7 @@ namespace FlyNotify.Views
                         }
                     }
 
-                    string detail = results.Count > 0 ? (profile.ArrivalAirport.Equals("ALL", StringComparison.OrdinalIgnoreCase) ? string.Join(" | ", results.Select(r => $"{r.ArrivalAirport}: {r.DetailedStatus}")) : profile.DetailedStatus) : "No Classes Found";
+                    string detail = results.Count > 0 ? (profile.IsWildcardOrRegion ? string.Join(" | ", results.Select(r => $"{r.ArrivalAirport}: {r.DetailedStatus}")) : profile.DetailedStatus) : "No Classes Found";
                     StatusMessageText.Text = $"Route {profile.DepartureAirport} -> {profile.ArrivalAirport}: {profile.AvailabilityStatus} ({detail})";
                 }
 
@@ -478,7 +488,7 @@ namespace FlyNotify.Views
                 lock (MonitoredFlights)
                 {
                     profilesToQuery = MonitoredFlights
-                        .OrderByDescending(p => p.ArrivalAirport.Equals("ALL", StringComparison.OrdinalIgnoreCase))
+                        .OrderByDescending(p => p.IsWildcardOrRegion)
                         .ToList();
                 }
 
@@ -535,17 +545,29 @@ namespace FlyNotify.Views
                         StatusMessageText.Text = $"Automated query: scraping {profile.DepartureAirport} -> {profile.ArrivalAirport}...";
                     });
 
-                    var results = await FlyNotify.Services.ScraperService.ExecuteScrapeAsync(profile, msg =>
+                    List<FlightProfile> results;
+                    try
+                    {
+                        results = await FlyNotify.Services.ScraperService.ExecuteScrapeAsync(profile, msg =>
+                        {
+                            Dispatcher.Invoke(() =>
+                            {
+                                StatusMessageText.Text = $"Automated query: [{profile.DepartureAirport} -> {profile.ArrivalAirport}] {msg}";
+                            });
+                        });
+                    }
+                    catch (Exception ex)
                     {
                         Dispatcher.Invoke(() =>
                         {
-                            StatusMessageText.Text = $"Automated query: [{profile.DepartureAirport} -> {profile.ArrivalAirport}] {msg}";
+                            StatusMessageText.Text = $"Automated query aborted due to error on route {profile.DepartureAirport} -> {profile.ArrivalAirport}: {ex.Message}";
                         });
-                    });
+                        break;
+                    }
 
                     Dispatcher.Invoke(() =>
                     {
-                        if (profile.ArrivalAirport.Equals("ALL", StringComparison.OrdinalIgnoreCase))
+                        if (profile.IsWildcardOrRegion)
                         {
                             foreach (var result in results)
                             {
@@ -653,7 +675,7 @@ namespace FlyNotify.Views
                             }
                         }
 
-                        string detail = results.Count > 0 ? (profile.ArrivalAirport.Equals("ALL", StringComparison.OrdinalIgnoreCase) ? string.Join(" | ", results.Select(r => $"{r.ArrivalAirport}: {r.DetailedStatus}")) : profile.DetailedStatus) : "No Classes Found";
+                        string detail = results.Count > 0 ? (profile.IsWildcardOrRegion ? string.Join(" | ", results.Select(r => $"{r.ArrivalAirport}: {r.DetailedStatus}")) : profile.DetailedStatus) : "No Classes Found";
                         StatusMessageText.Text = $"Automated query: route {profile.DepartureAirport} -> {profile.ArrivalAirport} is {profile.AvailabilityStatus} ({detail})";
                     });
                 }
@@ -775,6 +797,36 @@ namespace FlyNotify.Views
                     StatusMessageText.Text = $"Selected profile {profile.DepartureAirport} -> {profile.ArrivalAirport} | Status: {profile.AvailabilityStatus}";
                 }
             }
+        }
+
+        private void FlightDataGrid_Sorting(object sender, DataGridSortingEventArgs e)
+        {
+            var column = e.Column;
+            e.Handled = true;
+
+            var sortDirection = column.SortDirection == ListSortDirection.Ascending 
+                ? ListSortDirection.Descending 
+                : ListSortDirection.Ascending;
+
+            column.SortDirection = sortDirection;
+
+            string sortMember = column.SortMemberPath;
+            if (string.IsNullOrEmpty(sortMember) && column is DataGridBoundColumn boundColumn)
+            {
+                if (boundColumn.Binding is System.Windows.Data.Binding binding)
+                {
+                    sortMember = binding.Path.Path;
+                }
+            }
+
+            if (sortMember == "FullScheduleDisplay") sortMember = "TravelDate";
+            if (sortMember == "LastCheckedDisplay") sortMember = "LastChecked";
+
+            if (string.IsNullOrEmpty(sortMember)) return;
+
+            var view = CollectionViewSource.GetDefaultView(FlightDataGrid.ItemsSource);
+            view.SortDescriptions.Clear();
+            view.SortDescriptions.Add(new SortDescription(sortMember, sortDirection));
         }
 
         private void FlightDataGrid_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
@@ -969,13 +1021,13 @@ namespace FlyNotify.Views
         */
         private bool IsProfileCoveredByWildcard(FlightProfile specific, System.Collections.Generic.IEnumerable<FlightProfile> activeProfiles)
         {
-            if (specific.ArrivalAirport.Equals("ALL", StringComparison.OrdinalIgnoreCase))
+            if (specific.IsWildcardOrRegion)
             {
                 return false;
             }
 
             return activeProfiles.Any(allProfile =>
-                allProfile.ArrivalAirport.Equals("ALL", StringComparison.OrdinalIgnoreCase) &&
+                allProfile.IsWildcardOrRegion &&
                 allProfile.DepartureAirport.Equals(specific.DepartureAirport, StringComparison.OrdinalIgnoreCase) &&
                 allProfile.TravelDate.Date == specific.TravelDate.Date &&
                 allProfile.TravelEndDate.Date == specific.TravelEndDate.Date &&

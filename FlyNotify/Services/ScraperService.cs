@@ -48,32 +48,99 @@ namespace FlyNotify.Services
         }
 
 #pragma warning disable SYSLIB1045, IDE0290
-        private static readonly Regex NextJsPayloadRegex = new("self\\.__next_f\\.push\\(\\s*\\[\\s*\\d+\\s*,\\s*\"([^\"]*(?:\\\\.[^\"]*)*)\"\\s*\\]\\s*\\)", RegexOptions.Singleline);
         private static readonly Regex HourRegex = new(@"(\d+)\s*hour");
         private static readonly Regex MinRegex = new(@"(\d+)\s*min");
 #pragma warning restore SYSLIB1045, IDE0290
 
-        private static string ReconstructNextJsPayload(string html)
+        private static string CleanAstroPropsJson(JsonElement element)
         {
-            var sb = new StringBuilder();
-            var regex = NextJsPayloadRegex;
-            var matches = regex.Matches(html);
-
-            foreach (Match match in matches)
+            if (element.ValueKind == JsonValueKind.Array && element.GetArrayLength() == 2 && 
+                element[0].ValueKind == JsonValueKind.Number)
             {
-                string escapedVal = match.Groups[1].Value;
-                try
+                return CleanAstroPropsJson(element[1]);
+            }
+            
+            if (element.ValueKind == JsonValueKind.Array)
+            {
+                var sb = new StringBuilder("[");
+                bool first = true;
+                foreach (var item in element.EnumerateArray())
                 {
-                    string unescaped = Regex.Unescape(escapedVal);
-                    sb.Append(unescaped);
+                    if (!first) sb.Append(",");
+                    first = false;
+                    sb.Append(CleanAstroPropsJson(item));
                 }
-                catch (Exception ex)
+                sb.Append("]");
+                return sb.ToString();
+            }
+            
+            if (element.ValueKind == JsonValueKind.Object)
+            {
+                var sb = new StringBuilder("{");
+                bool first = true;
+                foreach (var prop in element.EnumerateObject())
                 {
-                    System.Diagnostics.Debug.WriteLine($"[NextJS Segment Unescape Failure]: {ex.Message}");
+                    if (!first) sb.Append(",");
+                    first = false;
+                    sb.Append(JsonSerializer.Serialize(prop.Name));
+                    sb.Append(":");
+                    sb.Append(CleanAstroPropsJson(prop.Value));
+                }
+                sb.Append("}");
+                return sb.ToString();
+            }
+            
+            return JsonSerializer.Serialize(element);
+        }
+
+        private static JsonElement GetUnwrappedProperty(JsonElement element, string name)
+        {
+            if (element.ValueKind == JsonValueKind.Object && element.TryGetProperty(name, out var prop))
+            {
+                return Unwrap(prop);
+            }
+            return default;
+        }
+
+        private static JsonElement Unwrap(JsonElement element)
+        {
+            if (element.ValueKind == JsonValueKind.Array && element.GetArrayLength() == 2)
+            {
+                return element[1];
+            }
+            return element;
+        }
+
+        private static bool IsRegionMatch(string destAirport, string targetRegion, Dictionary<string, string> airportToRegion)
+        {
+            if (destAirport.Equals(targetRegion, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            if (airportToRegion.TryGetValue(destAirport, out var regionCode))
+            {
+                if (regionCode.Equals(targetRegion, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+
+                // Handle macro wildcards
+                if (targetRegion.Equals("AU", StringComparison.OrdinalIgnoreCase) && regionCode.Equals("OC", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+                if (targetRegion.Equals("US", StringComparison.OrdinalIgnoreCase) && 
+                    (regionCode.Equals("WN", StringComparison.OrdinalIgnoreCase) || 
+                     regionCode.Equals("CN", StringComparison.OrdinalIgnoreCase) || 
+                     regionCode.Equals("EN", StringComparison.OrdinalIgnoreCase) || 
+                     regionCode.Equals("SP", StringComparison.OrdinalIgnoreCase)))
+                {
+                    return true;
                 }
             }
 
-            return sb.ToString();
+            return false;
         }
 
         /*
@@ -145,44 +212,72 @@ namespace FlyNotify.Services
                     string targetUrl = profile.BuildQantasQueryUrl();
                     await page.GoToAsync(targetUrl, new PuppeteerSharp.NavigationOptions
                     {
-                        WaitUntil = new[] { PuppeteerSharp.WaitUntilNavigation.DOMContentLoaded }
+                        WaitUntil = new[] { PuppeteerSharp.WaitUntilNavigation.Networkidle2 }
                     });
 
                     htmlContent = await page.GetContentAsync();
                 }
 
-                string payload = ReconstructNextJsPayload(htmlContent);
-
-                // Find "flights":[ array
-                int flightsIndex = payload.IndexOf("\"flights\":[");
-                if (flightsIndex < 0)
+                var htmlDoc = new HtmlAgilityPack.HtmlDocument();
+                htmlDoc.LoadHtml(htmlContent);
+                
+                var astroIsland = htmlDoc.DocumentNode.SelectSingleNode("//astro-island[contains(@component-url, 'SearchApp')]");
+                if (astroIsland == null)
                 {
-                    throw new Exception("The flights data array ('\"flights\":[') was not found in the page payload. This can occur if the Qantas site structure changed, or if the request was blocked/rate-limited by Cloudflare or standard security policies.");
+                    throw new Exception("The flights application module ('SearchApp') was not found in the page layout. This can occur if the Qantas site structure changed, or if the request was blocked/rate-limited by Cloudflare or standard security policies.");
                 }
 
-                // Extract substring starting at [
-                int startBracketIndex = flightsIndex + 10; // starts at '['
-                string searchSub = payload[startBracketIndex..];
-
-                // Find matching closing bracket for the array
-                int paginationIndex = searchSub.IndexOf(",\"pagination\"");
-                if (paginationIndex < 0)
+                string encodedProps = astroIsland.GetAttributeValue("props", "");
+                if (string.IsNullOrEmpty(encodedProps))
                 {
-                    throw new Exception("The closing pagination identifier (',\"pagination\"') was not found in the payload, making it impossible to extract flights JSON segment.");
+                    throw new Exception("The flight search payload attributes were missing or empty in the page layout.");
                 }
 
-                string flightsJsonArray = searchSub[..paginationIndex];
+                string decodedProps = System.Net.WebUtility.HtmlDecode(encodedProps);
 
-                // Clean backslash-escaped quotes inside JSON array
-                string cleanJson = flightsJsonArray.Replace("\\\"", "\"");
+                var airportToRegionCode = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                using var propsDoc = JsonDocument.Parse(decodedProps);
 
-                // Parse JSON array
+                if (propsDoc.RootElement.TryGetProperty("airports", out var airportsVal))
+                {
+                    var airportsArray = Unwrap(airportsVal);
+                    if (airportsArray.ValueKind == JsonValueKind.Array)
+                    {
+                        foreach (var entry in airportsArray.EnumerateArray())
+                        {
+                            var apt = Unwrap(entry);
+                            string code = GetUnwrappedProperty(apt, "code").GetString() ?? "";
+                            string regionCode = GetUnwrappedProperty(apt, "regionCode").GetString() ?? "";
+                            if (!string.IsNullOrEmpty(code))
+                            {
+                                airportToRegionCode[code] = regionCode;
+                            }
+                        }
+                    }
+                }
+
+                var initialData = GetUnwrappedProperty(propsDoc.RootElement, "initialData");
+                if (initialData.ValueKind == JsonValueKind.Undefined)
+                {
+                    throw new Exception("The initial search data block was not found inside the page layout payload.");
+                }
+
+                var okObj = GetUnwrappedProperty(initialData, "ok");
+                if (okObj.ValueKind == JsonValueKind.Undefined)
+                {
+                    throw new Exception("The search status details were not found inside the page layout payload.");
+                }
+
+                var rawFlights = GetUnwrappedProperty(okObj, "flights");
+                if (rawFlights.ValueKind != JsonValueKind.Array)
+                {
+                    throw new Exception("The search flights segment is not in a valid layout format.");
+                }
+
+                string cleanJson = CleanAstroPropsJson(rawFlights);
+
                 using var doc = JsonDocument.Parse(cleanJson);
                 var flightsArray = doc.RootElement;
-                if (flightsArray.ValueKind != JsonValueKind.Array)
-                {
-                    throw new Exception("The parsed flights JSON payload is not a valid JSON Array structure.");
-                }
 
                 var executionTierOrder = new[]
                 {
@@ -201,7 +296,7 @@ namespace FlyNotify.Services
                         string dest = destCode.GetString() ?? "";
 
                         bool destMatches = profile.ArrivalAirport.Equals("ALL", StringComparison.OrdinalIgnoreCase) ||
-                                           dest.Equals(profile.ArrivalAirport, StringComparison.OrdinalIgnoreCase);
+                                           IsRegionMatch(dest, profile.ArrivalAirport, airportToRegionCode);
 
                         if (origin.Equals(profile.DepartureAirport, StringComparison.OrdinalIgnoreCase) && destMatches)
                         {

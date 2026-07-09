@@ -139,7 +139,8 @@
             PreviewKeyDown="FlightDataGrid_PreviewKeyDown"
             RowHeaderWidth="0"
             SelectionMode="Extended"
-            SelectionChanged="FlightDataGrid_SelectionChanged">
+            SelectionChanged="FlightDataGrid_SelectionChanged"
+            Sorting="FlightDataGrid_Sorting">
 
             <DataGrid.ColumnHeaderStyle>
                 <Style TargetType="DataGridColumnHeader">

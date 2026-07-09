@@ -9,4 +9,6 @@
 [x] Test EF link
 [x] Email notification feature
 [x] Minimise to notification area
-[ ] Test at 1000 during automated scraping
+[x] Test at 1000 during automated scraping
+[ ] Stop scraping on error
+[ ] Sort on column click
