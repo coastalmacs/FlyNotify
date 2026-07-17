@@ -429,29 +429,55 @@ namespace FlyNotify.Views
         {
             System.Threading.Tasks.Task.Run(async () =>
             {
+                // Calculate initial next run time (10am local / midnight UTC of the next day)
+                DateTime nextRunUtc = DateTime.UtcNow.Date.AddDays(1);
+                DateTime nextRunLocal = nextRunUtc.ToLocalTime();
+
+                Dispatcher.Invoke(() =>
+                {
+                    EngineSchedulerText.Text = $"Scheduler Status: Idle (Next run: {nextRunLocal:yyyy-MM-dd HH:mm:ss})";
+                });
+
                 while (!token.IsCancellationRequested)
                 {
-                    DateTime nowUtc = DateTime.UtcNow;
-                    DateTime nextRunUtc = nowUtc.Date.AddDays(1); // Midnight UTC of the next day
-                    TimeSpan delay = nextRunUtc - nowUtc;
-
-                    DateTime nextRunLocal = nextRunUtc.ToLocalTime();
-                    Dispatcher.Invoke(() =>
-                    {
-                        EngineSchedulerText.Text = $"Scheduler Status: Idle (Next run: {nextRunLocal:yyyy-MM-dd HH:mm:ss})";
-                    });
-
                     try
                     {
-                        // Sleep until midnight UTC, checking cancellation
-                        await System.Threading.Tasks.Task.Delay(delay, token);
+                        // Check the time every 10 seconds
+                        await System.Threading.Tasks.Task.Delay(TimeSpan.FromSeconds(10), token);
                     }
                     catch (OperationCanceledException)
                     {
                         break;
                     }
 
-                    await RunAutomatedBatchQueryAsync(token);
+                    if (DateTime.UtcNow >= nextRunUtc)
+                    {
+                        // Check if we are running late (e.g. system was hibernated/asleep)
+                        if (DateTime.UtcNow - nextRunUtc > TimeSpan.FromMinutes(1))
+                        {
+                            Dispatcher.Invoke(() =>
+                            {
+                                StatusMessageText.Text = "System resumed. Waiting 20 seconds for network connections to stabilize...";
+                            });
+                            try
+                            {
+                                await System.Threading.Tasks.Task.Delay(TimeSpan.FromSeconds(20), token);
+                            }
+                            catch (OperationCanceledException)
+                            {
+                                break;
+                            }
+                        }
+
+                        await RunAutomatedBatchQueryAsync(token);
+
+                        nextRunUtc = DateTime.UtcNow.Date.AddDays(1);
+                        DateTime updatedNextRunLocal = nextRunUtc.ToLocalTime();
+                        Dispatcher.Invoke(() =>
+                        {
+                            EngineSchedulerText.Text = $"Scheduler Status: Idle (Next run: {updatedNextRunLocal:yyyy-MM-dd HH:mm:ss})";
+                        });
+                    }
                 }
             }, token);
         }
