@@ -29,5 +29,13 @@ namespace FlyNotify.Web.Services
                 return new List<string>(Logs);
             }
         }
+
+        public static void Clear()
+        {
+            lock (Lock)
+            {
+                Logs.Clear();
+            }
+        }
     }
 }

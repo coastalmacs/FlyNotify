@@ -222,8 +222,13 @@ document.addEventListener('DOMContentLoaded', () => {
     btnLiveScrape.addEventListener('click', () => triggerScan(true));
     btnMockScrape.addEventListener('click', () => triggerScan(false));
 
-    btnClearLogs.addEventListener('click', () => {
-        logConsole.innerHTML = '<div class="log-line system-line">[System] Console cleared locally. Logs will reload on next check.</div>';
+    btnClearLogs.addEventListener('click', async () => {
+        try {
+            await fetch('/api/logs', { method: 'DELETE' });
+        } catch (e) {
+            // ignore
+        }
+        logConsole.innerHTML = '<div class="log-line system-line">[System] Console cleared.</div>';
     });
 
     // Helper functions
@@ -294,8 +299,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         const now = new Date();
                         const diffMs = nextRunTime - now;
                         if (diffMs > 0) {
-                            const diffHours = diffMs / (1000 * 60 * 60);
-                            nextRunText.textContent = `${nextRunDateStr} (In ${diffHours.toFixed(2)} hours)`;
+                            const totalMins = Math.floor(diffMs / (1000 * 60));
+                            const hrs = Math.floor(totalMins / 60);
+                            const mins = totalMins % 60;
+                            nextRunText.textContent = `${nextRunDateStr} (In ${hrs}h ${mins}m)`;
                             return;
                         }
                     }

@@ -68,4 +68,11 @@ app.MapGet("/api/logs", () =>
     return Results.Ok(SystemLog.GetLogs());
 });
 
+app.MapDelete("/api/logs", () =>
+{
+    SystemLog.Clear();
+    SystemLog.Log("Console cleared.");
+    return Results.Ok(new { success = true });
+});
+
 app.Run();
