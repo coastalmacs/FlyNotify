@@ -16,8 +16,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="HtmlAgilityPack" Version="1.12.4" />
-    <PackageReference Include="PuppeteerSharp" Version="25.1.2" />
+    <ProjectReference Include="..\FlyNotify.Core\FlyNotify.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>

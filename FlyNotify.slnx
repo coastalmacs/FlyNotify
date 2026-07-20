@@ -1,3 +1,5 @@
 <Solution>
   <Project Path="FlyNotify/FlyNotify.csproj" />
+  <Project Path="FlyNotify.Core/FlyNotify.Core.csproj" />
+  <Project Path="FlyNotify.Web/FlyNotify.Web.csproj" />
 </Solution>

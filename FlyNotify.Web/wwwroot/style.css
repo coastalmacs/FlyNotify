@@ -1,0 +1,459 @@
+/* Custom properties matching FlyNotify WPF branding and light theme */
+:root {
+    --color-brand-red: #E02020;
+    --color-jet-charcoal: #1A1A1A;
+    --color-slate-gray: #54565A;
+    --color-border-gray: #D1D1D1;
+    --color-grid-lines: #E5E5E5;
+    
+    --color-bg-page: #FFFFFF;
+    --color-card-bg: #FFFFFF;
+    --color-header-bg: #F2F2F2;
+    --color-row-hover: #F9F9F9;
+    
+    --color-text-main: #1A1A1A;
+    --color-text-muted: #54565A;
+    --color-text-white: #FFFFFF;
+    
+    --color-success: #10b981;
+    --color-warning: #f59e0b;
+    --color-info: #0066CC;
+    
+    --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    --radius-button: 2px;
+    --transition-smooth: all 0.2s ease-in-out;
+}
+
+/* Reset and Base Styles */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--color-bg-page);
+    color: var(--color-text-main);
+    font-family: var(--font-family);
+    line-height: 1.5;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* App Header (Same as WPF Header) */
+.app-header {
+    background-color: var(--color-jet-charcoal);
+    border-bottom: 2px solid var(--color-brand-red);
+    padding: 15px 30px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.header-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.brand-title {
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+    color: var(--color-text-white);
+}
+
+.sub-title {
+    font-size: 12px;
+    color: #A0A0A0;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+/* Main Content Layout */
+.app-content {
+    flex: 1;
+    max-width: 1400px;
+    width: 100%;
+    margin: 20px auto;
+    padding: 0 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.top-row {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 20px;
+}
+
+@media (max-width: 900px) {
+    .top-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Card layout (White background, light borders as in WPF) */
+.card {
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border-gray);
+    border-radius: var(--radius-button);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-header {
+    padding: 12px 20px;
+    background-color: #F9F9F9;
+    border-bottom: 1px solid var(--color-border-gray);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-header h2 {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--color-jet-charcoal);
+}
+
+.card-body {
+    padding: 20px;
+    flex: 1;
+}
+
+/* Scheduler Status */
+.status-indicator {
+    padding: 3px 8px;
+    border-radius: 50px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.status-indicator.active {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: var(--color-success);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.status-text {
+    font-size: 13px;
+    color: var(--color-text-muted);
+    margin-bottom: 20px;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+}
+
+/* Buttons (Matching BrandButtonStyle) */
+.btn {
+    font-family: var(--font-family);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 15px;
+    border-radius: var(--radius-button);
+    border: none;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-primary {
+    background-color: var(--color-brand-red);
+    color: var(--color-text-white);
+}
+
+.btn-primary:hover {
+    background-color: var(--color-slate-gray);
+}
+
+.btn-primary:active {
+    background-color: #3D3E40;
+}
+
+.btn-secondary {
+    background-color: #ECECEC;
+    color: var(--color-text-main);
+    border: 1px solid var(--color-border-gray);
+}
+
+.btn-secondary:hover {
+    background-color: #E2E2E2;
+}
+
+.btn-accent {
+    background-color: var(--color-brand-red);
+    color: var(--color-text-white);
+}
+
+.btn-accent:hover {
+    background-color: var(--color-slate-gray);
+}
+
+.btn-accent:active {
+    background-color: #3D3E40;
+}
+
+.btn-full {
+    width: 100%;
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-text {
+    background: none;
+    border: none;
+    color: var(--color-text-muted);
+    font-size: 12px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.btn-text:hover {
+    color: var(--color-text-main);
+    text-decoration: underline;
+}
+
+/* Form Fields */
+.form-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 12px;
+}
+
+.form-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-muted);
+}
+
+input[type="text"], input[type="number"], input[type="date"] {
+    background-color: #FFFFFF;
+    border: 1px solid var(--color-border-gray);
+    border-radius: var(--radius-button);
+    padding: 8px 12px;
+    color: var(--color-text-main);
+    font-family: var(--font-family);
+    font-size: 13px;
+    transition: var(--transition-smooth);
+    width: 100%;
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--color-brand-red);
+}
+
+.flex-align-end {
+    align-items: flex-end;
+}
+
+.checkboxes-group {
+    flex: 2;
+}
+
+.checkboxes-row {
+    display: flex;
+    gap: 12px;
+    height: 38px;
+    align-items: center;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text-main);
+    text-transform: none;
+    letter-spacing: 0;
+    cursor: pointer;
+}
+
+/* Badges */
+.badge {
+    background-color: var(--color-slate-gray);
+    color: var(--color-text-white);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 20px;
+}
+
+/* Flight Grid Table (Matching WPF DataGrid styling) */
+.table-section {
+    width: 100%;
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+.flight-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    text-align: left;
+    background-color: #FFFFFF;
+}
+
+.flight-table th {
+    background-color: var(--color-header-bg);
+    color: var(--color-jet-charcoal);
+    font-weight: bold;
+    font-size: 12px;
+    padding: 10px 12px;
+    border-bottom: 2px solid var(--color-border-gray);
+}
+
+.flight-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--color-grid-lines);
+    color: var(--color-text-main);
+    vertical-align: middle;
+}
+
+.flight-table tr:hover td {
+    background-color: var(--color-row-hover);
+}
+
+.date-cell {
+    font-weight: 500;
+    color: var(--color-text-main);
+}
+
+.badge-cabin {
+    background: #EAEAEA;
+    color: var(--color-text-main);
+    border: 1px solid var(--color-border-gray);
+    padding: 2px 6px;
+    border-radius: var(--radius-button);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.status-cell span {
+    padding: 2px 6px;
+    border-radius: var(--radius-button);
+    font-weight: bold;
+    font-size: 11px;
+}
+
+.status-available {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--color-success);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.status-checked {
+    background: #ECECEC;
+    color: var(--color-text-muted);
+    border: 1px solid var(--color-border-gray);
+}
+
+.status-tbd {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--color-warning);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+/* Action Links (Matching ActionLinkStyle in WPF) */
+.action-link {
+    color: var(--color-text-muted);
+    cursor: pointer;
+    text-decoration: underline;
+    font-size: 12px;
+    margin: 0 4px;
+    transition: var(--transition-smooth);
+}
+
+.action-link:hover {
+    color: var(--color-info);
+}
+
+.link-delete {
+    color: #DC2626;
+}
+
+.link-delete:hover {
+    color: #FF0000 !important;
+}
+
+.divider {
+    color: var(--color-border-gray);
+    font-size: 12px;
+    user-select: none;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 30px !important;
+    color: var(--color-text-muted);
+    font-style: italic;
+}
+
+/* Log Console (White Card, dark monospace text for diagnostic logging) */
+.console-section {
+    flex: 1;
+}
+
+.console-wrapper {
+    background-color: #F9F9F9;
+    border-radius: var(--radius-button);
+    padding: 12px;
+    margin: 15px;
+    border: 1px solid var(--color-border-gray);
+}
+
+.console {
+    height: 150px;
+    overflow-y: auto;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    color: var(--color-text-main);
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.log-line {
+    word-break: break-all;
+}
+
+.system-line {
+    color: var(--color-info);
+    font-weight: 500;
+}
+
+/* Footer */
+.app-footer {
+    background-color: #F2F2F2;
+    padding: 15px;
+    text-align: center;
+    border-top: 1px solid var(--color-border-gray);
+    font-size: 11px;
+    color: var(--color-text-muted);
+}

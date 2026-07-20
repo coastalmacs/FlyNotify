@@ -105,7 +105,7 @@ namespace FlyNotify.Views
             }
 
             MessageBoxResult chosenResult = MessageBox.Show(
-                "Which type of query would you like to run?\nClick Yes to execute a live query, no to run local test query or Cancel to abort.",
+                "Which type of query would you like to run?\nClick Yes to execute a live query, no to run test query or Cancel to abort.",
                 "Batch Query Mode",
                 MessageBoxButton.YesNoCancel,
                 MessageBoxImage.Question
@@ -178,6 +178,15 @@ namespace FlyNotify.Views
                     catch (Exception ex)
                     {
                         StatusMessageText.Text = $"Batch query aborted due to error on route {profile.DepartureAirport} -> {profile.ArrivalAirport}: {ex.Message}";
+                        MessageBox.Show(
+                            $"A scraper error occurred while processing the route {profile.DepartureAirport} -> {profile.ArrivalAirport}.\n\n" +
+                            $"Error Type: {ex.GetType().Name}\n" +
+                            $"Message: {ex.Message}\n\n" +
+                            $"Stack Trace:\n{ex.StackTrace}",
+                            "Scraper Execution Failure",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Error
+                        );
                         break;
                     }
 

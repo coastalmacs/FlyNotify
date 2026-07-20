@@ -6,11 +6,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using System.Windows;
 using HtmlAgilityPack;
 using FlyNotify.Models;
-using Application = System.Windows.Application;
-using MessageBox = System.Windows.MessageBox;
 
 namespace FlyNotify.Services
 {
@@ -20,7 +17,10 @@ namespace FlyNotify.Services
     */
     public static partial class ScraperService
     {
-        private static readonly HttpClient Client = new();
+        private static readonly HttpClient Client = new(new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true
+        });
 
         // Flag to toggle between live HTTP scraping and local debug HTML mock data files.
         public static bool UseMockData { get; set; } = true;
@@ -158,38 +158,46 @@ namespace FlyNotify.Services
                 string htmlContent;
                 if (UseMockData)
                 {
-                    string debugPath = System.IO.Path.Combine(
-                        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                        "FlyNotify",
-                        "qantas.html"
-                    );
-                    htmlContent = await System.IO.File.ReadAllTextAsync(debugPath);
+                    try
+                    {
+                        string mockUrl = "https://192.168.1.11:8081/flynotify/qantas.html";
+                        progressCallback?.Invoke("Downloading mock data...");
+                        htmlContent = await Client.GetStringAsync(mockUrl);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new Exception($"Failed to download testing mock data from remote server. Error: {ex.Message}", ex);
+                    }
                 }
                 else
                 {
                     /*
                         Verify and load Chromium browser from the common application AppData directory.
                     */
-                    var storageDirectory = System.IO.Path.Combine(
-                        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                        "FlyNotify"
-                    );
+                    string executablePath = Environment.GetEnvironmentVariable("PUPPETEER_EXECUTABLE_PATH") ?? "";
 
-                    var fetcherOptions = new PuppeteerSharp.BrowserFetcherOptions
+                    if (string.IsNullOrWhiteSpace(executablePath))
                     {
-                        Path = storageDirectory
-                    };
-                    var fetcher = new PuppeteerSharp.BrowserFetcher(fetcherOptions);
+                        var storageDirectory = System.IO.Path.Combine(
+                            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                            "FlyNotify"
+                        );
 
-                    string executablePath;
-                    var installedBrowser = fetcher.GetInstalledBrowsers().FirstOrDefault();
-                    if (installedBrowser == null)
-                    {
-                        progressCallback?.Invoke("Downloading browser...");
-                        installedBrowser = await fetcher.DownloadAsync();
-                        progressCallback?.Invoke("Searching...");
+                        var fetcherOptions = new PuppeteerSharp.BrowserFetcherOptions
+                        {
+                            Path = storageDirectory
+                        };
+                        var fetcher = new PuppeteerSharp.BrowserFetcher(fetcherOptions);
+
+                        var installedBrowser = fetcher.GetInstalledBrowsers().FirstOrDefault();
+                        if (installedBrowser == null)
+                        {
+                            progressCallback?.Invoke("Downloading browser...");
+                            installedBrowser = await fetcher.DownloadAsync();
+                            progressCallback?.Invoke("Searching...");
+                        }
+                        executablePath = installedBrowser.GetExecutablePath();
                     }
-                    executablePath = installedBrowser.GetExecutablePath();
 
                     var options = new PuppeteerSharp.LaunchOptions
                     {
@@ -451,22 +459,7 @@ namespace FlyNotify.Services
             {
                 System.Diagnostics.Debug.WriteLine($"[Scraper Exception Core]: {ex.Message}");
                 progressCallback?.Invoke("Error occurred.");
-
-                /*
-                    Notify user of scrape failure details via a standard system dialog.
-                */
-                Application.Current?.Dispatcher?.Invoke(() =>
-                {
-                    MessageBox.Show(
-                        $"A scraper error occurred while processing the route {profile.DepartureAirport} -> {profile.ArrivalAirport}.\n\n" +
-                        $"Error Type: {ex.GetType().Name}\n" +
-                        $"Message: {ex.Message}\n\n" +
-                        $"Stack Trace:\n{ex.StackTrace}",
-                        "Scraper Execution Failure",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Error
-                    );
-                });
+                throw;
             }
 
             return discoveredProfiles;

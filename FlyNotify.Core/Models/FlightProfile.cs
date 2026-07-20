@@ -1,7 +1,6 @@
 using System;
 using System.Text;
 using System.Text.Json.Serialization;
-using System.Windows.Media.Imaging;
 
 namespace FlyNotify.Models
 {
@@ -352,6 +351,9 @@ namespace FlyNotify.Models
                 }
             }
         }
+
+        public string QantasQueryUrl => BuildQantasQueryUrl();
+        public string ExpertFlyerQueryUrl => BuildExpertFlyerQueryUrl();
 
         /*
             SPECIFICATION ENGINE 1: Generates a perfectly formatted Qantas Reward Finder 

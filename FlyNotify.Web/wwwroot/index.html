@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlyNotify</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="app-header">
+        <div class="header-container">
+            <h1 class="brand-title">FLYNOTIFY</h1>
+            <span class="sub-title">QFF Award Seat Analyzer</span>
+        </div>
+    </header>
+
+    <main class="app-content">
+        <section class="top-row">
+            <!-- Status Card -->
+            <div class="card glass-card status-card">
+                <div class="card-header">
+                    <h2>Scheduler Status</h2>
+                    <span class="status-indicator active">Running</span>
+                </div>
+                <div class="card-body">
+                    <p id="next-run-text" class="status-text">Calculating next run time...</p>
+                    <div class="button-group">
+                        <button id="btn-live-scrape" class="btn btn-primary">Trigger Live Scan</button>
+                        <button id="btn-mock-scrape" class="btn btn-secondary">Trigger Test Scan</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add Profile Card -->
+            <div class="card glass-card add-card">
+                <div class="card-header">
+                    <h2>Add Flight Profile</h2>
+                </div>
+                <div class="card-body">
+                    <form id="add-profile-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="departure">Origin</label>
+                                <input type="text" id="departure" value="SYD" required placeholder="e.g. SYD">
+                            </div>
+                            <div class="form-group">
+                                <label for="arrival">Destination</label>
+                                <input type="text" id="arrival" value="ALL" required placeholder="e.g. ALL, NZ, ZQN">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="travel-date">Start Date</label>
+                                <input type="date" id="travel-date" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="travel-end-date">End Date</label>
+                                <input type="date" id="travel-end-date" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row flex-align-end">
+                            <div class="form-group">
+                                <label for="passengers">Passengers</label>
+                                <input type="number" id="passengers" value="1" min="1" max="9" required>
+                            </div>
+                            <div class="form-group checkboxes-group">
+                                <label>Cabin Classes</label>
+                                <div class="checkboxes-row">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="cabins" value="Economy"> Y
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="cabins" value="PremiumEconomy"> W
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="cabins" value="Business"> J
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="cabins" value="First" checked> F
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-accent btn-full">Monitor Route</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- Profiles Table Section -->
+        <section class="table-section card glass-card">
+            <div class="card-header">
+                <h2>Monitored Flight Profiles</h2>
+                <span id="profile-count" class="badge">0 Active</span>
+            </div>
+            <div class="table-container">
+                <table class="flight-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Flight</th>
+                            <th>Dep</th>
+                            <th>Arr</th>
+                            <th>Dur</th>
+                            <th>Class</th>
+                            <th>Pax</th>
+                            <th>Status</th>
+                            <th>Checked</th>
+                            <th>Links</th>
+                        </tr>
+                    </thead>
+                    <tbody id="profiles-tbody">
+                        <tr>
+                            <td colspan="10" class="empty-state">Loading active profiles...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Log Console Section -->
+        <section class="console-section card glass-card">
+            <div class="card-header">
+                <h2>System Log Console</h2>
+                <button id="btn-clear-logs" class="btn-text">Clear Console View</button>
+            </div>
+            <div class="console-wrapper">
+                <div id="log-console" class="console">
+                    <div class="log-line system-line">[System] Initializing console listener...</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+
+
+    <script src="app.js"></script>
+</body>
+</html>
