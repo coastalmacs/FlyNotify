@@ -18,7 +18,4 @@ copy "FlyNotify\bin\Release\net10.0-windows\win-x64\publish\FlyNotify.exe" "dist
 
 echo.
 echo Standalone executable is ready in the 'dist' folder.
-echo Opening dist folder...
-explorer "dist"
 
-pause

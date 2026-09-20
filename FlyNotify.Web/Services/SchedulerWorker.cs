@@ -114,13 +114,15 @@ namespace FlyNotify.Web.Services
                 var random = new Random();
                 int liveQueriesScraped = 0;
 
+                var matchedSpecificProfiles = new HashSet<FlightProfile>();
+
                 for (int i = 0; i < sortedProfiles.Count; i++)
                 {
                     var profile = sortedProfiles[i];
 
-                    if (IsProfileCoveredByWildcard(profile, sortedProfiles))
+                    if (IsProfileCoveredByWildcard(profile, sortedProfiles) && matchedSpecificProfiles.Contains(profile))
                     {
-                        SystemLog.Log($"Skipping {profile.DepartureAirport} -> {profile.ArrivalAirport} (covered by ALL/wildcard query)...");
+                        SystemLog.Log($"Skipping {profile.DepartureAirport} -> {profile.ArrivalAirport} (covered and resolved by ALL/wildcard query)...");
                         continue;
                     }
 
@@ -197,16 +199,8 @@ namespace FlyNotify.Web.Services
                                 specific.AvailabilityStatus = "Available";
                                 specific.DetailedStatus = match.DetailedStatus;
                                 specific.LastChecked = DateTime.Now;
-                            }
-                            else
-                            {
-                                specific.AvailabilityStatus = "Checked";
-                                specific.DetailedStatus = "No Classes Found";
-                                specific.FlightNumber = "TBD";
-                                specific.DepartureTime = "TBD";
-                                specific.ArrivalTime = "TBD";
-                                specific.Duration = "TBD";
-                                specific.LastChecked = DateTime.Now;
+
+                                matchedSpecificProfiles.Add(specific);
                             }
                         }
 
@@ -279,14 +273,29 @@ namespace FlyNotify.Web.Services
 
         private bool IsProfileCoveredByWildcard(FlightProfile specific, IEnumerable<FlightProfile> activeProfiles)
         {
-            if (specific.IsWildcardOrRegion) return false;
+            if (specific.IsWildcardOrRegion)
+            {
+                return false;
+            }
+
             return activeProfiles.Any(allProfile =>
-                allProfile.IsWildcardOrRegion &&
-                allProfile.DepartureAirport.Equals(specific.DepartureAirport, StringComparison.OrdinalIgnoreCase) &&
-                allProfile.TravelDate.Date == specific.TravelDate.Date &&
-                allProfile.TravelEndDate.Date == specific.TravelEndDate.Date &&
-                allProfile.PassengerCount == specific.PassengerCount &&
-                (specific.SelectedCabins & allProfile.SelectedCabins) == specific.SelectedCabins);
+            {
+                string? regionCode = null;
+                bool hasRegion = false;
+                lock (ScraperService.AirportToRegionCache)
+                {
+                    hasRegion = ScraperService.AirportToRegionCache.TryGetValue(specific.ArrivalAirport, out regionCode);
+                }
+
+                return allProfile.IsWildcardOrRegion &&
+                       allProfile.DepartureAirport.Equals(specific.DepartureAirport, StringComparison.OrdinalIgnoreCase) &&
+                        specific.TravelDate.Date >= allProfile.TravelDate.Date &&
+                        specific.TravelEndDate.Date <= allProfile.TravelEndDate.Date &&
+                       allProfile.PassengerCount == specific.PassengerCount &&
+                       (specific.SelectedCabins & allProfile.SelectedCabins) == specific.SelectedCabins &&
+                       (allProfile.ArrivalAirport.Equals("ALL", StringComparison.OrdinalIgnoreCase) ||
+                        (hasRegion && regionCode != null && regionCode.Equals(allProfile.ArrivalAirport, StringComparison.OrdinalIgnoreCase)));
+            });
         }
 
         private string GetProfileKey(FlightProfile profile)

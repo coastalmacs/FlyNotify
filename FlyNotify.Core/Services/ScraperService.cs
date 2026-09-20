@@ -25,6 +25,8 @@ namespace FlyNotify.Services
         // Flag to toggle between live HTTP scraping and local debug HTML mock data files.
         public static bool UseMockData { get; set; } = true;
 
+        public static Dictionary<string, string> AirportToRegionCache { get; } = new(StringComparer.OrdinalIgnoreCase);
+
         static ScraperService()
         {
             Client.Timeout = TimeSpan.FromSeconds(30);
@@ -259,6 +261,10 @@ namespace FlyNotify.Services
                             if (!string.IsNullOrEmpty(code))
                             {
                                 airportToRegionCode[code] = regionCode;
+                                lock (AirportToRegionCache)
+                                {
+                                    AirportToRegionCache[code] = regionCode;
+                                }
                             }
                         }
                     }
@@ -311,7 +317,9 @@ namespace FlyNotify.Services
                             if (flight.TryGetProperty("departsAt", out var departsAtProp))
                             {
                                 string departsAt = departsAtProp.GetString() ?? "";
-                                if (DateTime.TryParse(departsAt, out DateTime flightDate) && flightDate.Date == profile.TravelDate.Date)
+                                if (DateTime.TryParse(departsAt, out DateTime flightDate) && 
+                                    flightDate.Date >= profile.TravelDate.Date && 
+                                    flightDate.Date <= profile.TravelEndDate.Date)
                                 {
                                     string flightNo = "QF000";
                                     if (flight.TryGetProperty("legs", out var legsProp) && legsProp.ValueKind == JsonValueKind.Array && legsProp.GetArrayLength() > 0)
@@ -435,8 +443,8 @@ namespace FlyNotify.Services
                                     {
                                         DepartureAirport = origin,
                                         ArrivalAirport = dest,
-                                        TravelDate = profile.TravelDate,
-                                        TravelEndDate = profile.TravelEndDate,
+                                        TravelDate = flightDate,
+                                        TravelEndDate = flightDate,
                                         PassengerCount = profile.PassengerCount,
                                         SelectedCabins = profile.SelectedCabins,
                                         FlightNumber = flightNo,

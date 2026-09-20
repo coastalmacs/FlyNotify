@@ -365,7 +365,8 @@ namespace FlyNotify.Models
 
             var urlBuilder = new StringBuilder("https://flightrewardfinder.qantas.com/");
             urlBuilder.Append($"?o={Uri.EscapeDataString(DepartureAirport)}");
-            string arrivalParam = ArrivalAirport.Equals("ALL", StringComparison.OrdinalIgnoreCase) ? "*" : ArrivalAirport;
+            string arrivalParam = ArrivalAirport.Equals("ALL", StringComparison.OrdinalIgnoreCase) ? "*" : 
+                                  (Enum.TryParse<TravelRegion>(ArrivalAirport, true, out _) ? ";" + ArrivalAirport : ArrivalAirport);
             urlBuilder.Append($"&d={Uri.EscapeDataString(arrivalParam)}");
             urlBuilder.Append($"&c={Uri.EscapeDataString(SelectedCabins.ToQantasString())}"); // e.g. "Business,First"
             urlBuilder.Append($"&p={PassengerCount}");

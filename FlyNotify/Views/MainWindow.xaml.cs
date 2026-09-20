@@ -136,14 +136,16 @@ namespace FlyNotify.Views
                 var random = new Random();
                 int liveQueriesScraped = 0;
 
+                var matchedSpecificProfiles = new HashSet<FlightProfile>();
+
                 for (int i = 0; i < profilesToQuery.Count; i++)
                 {
                     var profile = profilesToQuery[i];
 
                     // Skip network checks if covered by a wildcard search
-                    if (IsProfileCoveredByWildcard(profile, profilesToQuery))
+                    if (IsProfileCoveredByWildcard(profile, profilesToQuery) && matchedSpecificProfiles.Contains(profile))
                     {
-                        StatusMessageText.Text = $"Skipping check for {profile.DepartureAirport} -> {profile.ArrivalAirport} (covered by ALL query)...";
+                        StatusMessageText.Text = $"Skipping check for {profile.DepartureAirport} -> {profile.ArrivalAirport} (covered and resolved by ALL/wildcard query)...";
                         continue;
                     }
 
@@ -239,16 +241,8 @@ namespace FlyNotify.Views
                                 specific.AvailabilityStatus = "Available";
                                 specific.DetailedStatus = match.DetailedStatus;
                                 specific.LastChecked = DateTime.Now;
-                            }
-                            else
-                            {
-                                specific.AvailabilityStatus = "Checked";
-                                specific.DetailedStatus = "No Classes Found";
-                                specific.FlightNumber = "TBD";
-                                specific.DepartureTime = "TBD";
-                                specific.ArrivalTime = "TBD";
-                                specific.Duration = "TBD";
-                                specific.LastChecked = DateTime.Now;
+
+                                matchedSpecificProfiles.Add(specific);
                             }
                         }
 
@@ -529,6 +523,7 @@ namespace FlyNotify.Views
 
                 var random = new Random();
                 int liveQueriesScraped = 0;
+                var matchedSpecificProfiles = new HashSet<FlightProfile>();
 
                 for (int i = 0; i < profilesToQuery.Count; i++)
                 {
@@ -542,14 +537,14 @@ namespace FlyNotify.Views
                     bool isCovered = false;
                     Dispatcher.Invoke(() =>
                     {
-                        isCovered = IsProfileCoveredByWildcard(profile, profilesToQuery);
+                        isCovered = IsProfileCoveredByWildcard(profile, profilesToQuery) && matchedSpecificProfiles.Contains(profile);
                     });
 
                     if (isCovered)
                     {
                         Dispatcher.Invoke(() =>
                         {
-                            StatusMessageText.Text = $"Automated query: skipping {profile.DepartureAirport} -> {profile.ArrivalAirport} (covered by ALL query)...";
+                            StatusMessageText.Text = $"Automated query: skipping {profile.DepartureAirport} -> {profile.ArrivalAirport} (covered and resolved by ALL/wildcard query)...";
                         });
                         continue;
                     }
@@ -651,16 +646,8 @@ namespace FlyNotify.Views
                                     specific.AvailabilityStatus = "Available";
                                     specific.DetailedStatus = match.DetailedStatus;
                                     specific.LastChecked = DateTime.Now;
-                                }
-                                else
-                                {
-                                    specific.AvailabilityStatus = "Checked";
-                                    specific.DetailedStatus = "No Classes Found";
-                                    specific.FlightNumber = "TBD";
-                                    specific.DepartureTime = "TBD";
-                                    specific.ArrivalTime = "TBD";
-                                    specific.Duration = "TBD";
-                                    specific.LastChecked = DateTime.Now;
+
+                                    matchedSpecificProfiles.Add(specific);
                                 }
                             }
 
@@ -1062,12 +1049,23 @@ namespace FlyNotify.Views
             }
 
             return activeProfiles.Any(allProfile =>
-                allProfile.IsWildcardOrRegion &&
-                allProfile.DepartureAirport.Equals(specific.DepartureAirport, StringComparison.OrdinalIgnoreCase) &&
-                allProfile.TravelDate.Date == specific.TravelDate.Date &&
-                allProfile.TravelEndDate.Date == specific.TravelEndDate.Date &&
-                allProfile.PassengerCount == specific.PassengerCount &&
-                (specific.SelectedCabins & allProfile.SelectedCabins) == specific.SelectedCabins);
+            {
+                string? regionCode = null;
+                bool hasRegion = false;
+                lock (FlyNotify.Services.ScraperService.AirportToRegionCache)
+                {
+                    hasRegion = FlyNotify.Services.ScraperService.AirportToRegionCache.TryGetValue(specific.ArrivalAirport, out regionCode);
+                }
+
+                return allProfile.IsWildcardOrRegion &&
+                       allProfile.DepartureAirport.Equals(specific.DepartureAirport, StringComparison.OrdinalIgnoreCase) &&
+                        specific.TravelDate.Date >= allProfile.TravelDate.Date &&
+                        specific.TravelEndDate.Date <= allProfile.TravelEndDate.Date &&
+                       allProfile.PassengerCount == specific.PassengerCount &&
+                       (specific.SelectedCabins & allProfile.SelectedCabins) == specific.SelectedCabins &&
+                       (allProfile.ArrivalAirport.Equals("ALL", StringComparison.OrdinalIgnoreCase) ||
+                        (hasRegion && regionCode != null && regionCode.Equals(allProfile.ArrivalAirport, StringComparison.OrdinalIgnoreCase)));
+            });
         }
 
         /*
