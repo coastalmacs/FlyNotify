@@ -1,0 +1,55 @@
+======================================================================
+ FlyNotify - QNAP Container Station Installation Guide
+======================================================================
+
+1. PACKAGE DEPLOYMENT ARCHIVE
+----------------------------------------------------------------------
+   - On your Windows machine, run:
+       package-docker.bat
+   - This creates:
+       dist\flynotify-docker.zip
+
+
+2. UPLOAD & EXTRACT ON QNAP NAS
+----------------------------------------------------------------------
+   - Open QNAP "File Station".
+   - Navigate to your Container shared folder:
+       /share/Container/
+   - Create a subfolder named "flynotify":
+       /share/Container/flynotify
+   - Upload "flynotify-docker.zip" into that folder.
+   - Right-click the zip file in File Station and choose "Extract Here".
+   - Confirm the following files and folders exist:
+       /share/Container/flynotify/Dockerfile
+       /share/Container/flynotify/flynotify.yml
+       /share/Container/flynotify/FlyNotify.Core/
+       /share/Container/flynotify/FlyNotify.Web/
+   - Ensure a persistent data directory exists:
+       /share/Container/flynotify/data
+
+
+3. DEPLOY IN CONTAINER STATION
+----------------------------------------------------------------------
+   - Open "Container Station" in the QNAP web GUI.
+   - Go to "Applications" (left sidebar menu).
+   - Click "Create" (or "Add Application").
+   - Set the Application Name:
+       flynotify
+   - In the YAML configuration editor, paste the contents of "flynotify.yml"
+     (or upload/select /share/Container/flynotify/flynotify.yml).
+   - Click "Validate YAML" to verify syntax.
+   - Click "Deploy" / "Create".
+   - Container Station will build the Docker image (installs Chromium and .NET 10)
+     and launch the container.
+
+
+4. VERIFY & ACCESS
+----------------------------------------------------------------------
+   - Open your web browser and navigate to:
+       http://<YOUR_QNAP_IP>:8085
+   - In the Web Dashboard or Container Station logs, verify you see:
+       - "Daily Flight Scheduler Service Started."
+       - "Next automated scan scheduled for ... 00:00:15Z (... local)"
+   - Any monitored flight profiles and logs will be saved persistently to:
+       /share/Container/flynotify/data/
+======================================================================

@@ -11,8 +11,9 @@ services:
       - /share/Container/flynotify/data:/app/data
     environment:
       - TZ=Australia/Sydney
-      - Scheduler__Hour=10
-      - Scheduler__Minute=0
+      - Scheduler__HourUtc=0
+      - Scheduler__MinuteUtc=0
+      - Scheduler__SecondUtc=15
       - Scraper__UseMockData=true
       - PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
     restart: always

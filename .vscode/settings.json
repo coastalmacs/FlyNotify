@@ -1,1 +1,4 @@
-{}
+{
+    "omnisharp.defaultLaunchSolution": "FlyNotify.sln",
+    "dotnet.defaultSolution": "FlyNotify.sln"
+}

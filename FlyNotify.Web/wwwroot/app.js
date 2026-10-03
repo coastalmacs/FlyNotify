@@ -291,10 +291,11 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let i = logs.length - 1; i >= 0; i--) {
             const line = logs[i];
             if (line.includes('Next automated scan scheduled for')) {
-                const match = line.match(/scheduled for (\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})/);
+                const match = line.match(/scheduled for (\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})Z?(?:\s*\(([^)]+)\))?/);
                 if (match && match[1]) {
-                    const nextRunDateStr = match[1];
-                    const nextRunTime = new Date(nextRunDateStr.replace(' ', 'T'));
+                    const zuluDateStr = match[1];
+                    const nextRunTime = new Date(zuluDateStr.replace(' ', 'T') + 'Z');
+                    const localNote = match[2] ? ` (${match[2]})` : '';
                     if (!isNaN(nextRunTime)) {
                         const now = new Date();
                         const diffMs = nextRunTime - now;
@@ -302,16 +303,16 @@ document.addEventListener('DOMContentLoaded', () => {
                             const totalMins = Math.floor(diffMs / (1000 * 60));
                             const hrs = Math.floor(totalMins / 60);
                             const mins = totalMins % 60;
-                            nextRunText.textContent = `${nextRunDateStr} (In ${hrs}h ${mins}m)`;
+                            nextRunText.textContent = `${zuluDateStr}Z${localNote} (In ${hrs}h ${mins}m)`;
                             return;
                         }
                     }
-                    nextRunText.textContent = nextRunDateStr;
+                    nextRunText.textContent = `${zuluDateStr}Z${localNote}`;
                     return;
                 }
             }
         }
-        nextRunText.textContent = "Scheduled to run daily at 10:00 AM";
+        nextRunText.textContent = "Scheduled to run daily at 00:00:15 Zulu (UTC)";
     }
 
     // Initial load and polling intervals

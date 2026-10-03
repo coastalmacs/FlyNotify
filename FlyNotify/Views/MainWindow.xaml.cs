@@ -306,8 +306,8 @@ namespace FlyNotify.Views
                 _scrapeSemaphore.Release();
                 ManualBatchBtn.IsEnabled = true;
 
-                // Re-calculate and display scheduler next run time in local time
-                DateTime nextRunUtc = DateTime.UtcNow.Date.AddDays(1);
+                // Re-calculate and display scheduler next run time in local time (00:00:15 Zulu)
+                DateTime nextRunUtc = GetNextRunUtc();
                 EngineSchedulerText.Text = $"Scheduler Status: Idle (Next run: {nextRunUtc.ToLocalTime():yyyy-MM-dd HH:mm:ss})";
             }
         }
@@ -428,12 +428,28 @@ namespace FlyNotify.Views
         /*
             Background loop that periodically schedules execution of midnight UTC batch checks.
         */
+        /*
+            Calculates the next automated run time scheduled at 00:00:15 Zulu (UTC)
+            to capture daily flight schedule releases without missing updates.
+        */
+        private static DateTime GetNextRunUtc()
+        {
+            DateTime nowUtc = DateTime.UtcNow;
+            DateTime nextRunUtc = nowUtc.Date.AddSeconds(15);
+            if (nowUtc >= nextRunUtc)
+            {
+                nextRunUtc = nextRunUtc.AddDays(1);
+            }
+
+            return nextRunUtc;
+        }
+
         private void StartDailyScheduler(System.Threading.CancellationToken token)
         {
             System.Threading.Tasks.Task.Run(async () =>
             {
-                // Calculate initial next run time (10am local / midnight UTC of the next day)
-                DateTime nextRunUtc = DateTime.UtcNow.Date.AddDays(1);
+                // Calculate next run time targeting 00:00:15 Zulu (UTC)
+                DateTime nextRunUtc = GetNextRunUtc();
                 DateTime nextRunLocal = nextRunUtc.ToLocalTime();
 
                 Dispatcher.Invoke(() =>
@@ -474,7 +490,7 @@ namespace FlyNotify.Views
 
                         await RunAutomatedBatchQueryAsync(token);
 
-                        nextRunUtc = DateTime.UtcNow.Date.AddDays(1);
+                        nextRunUtc = GetNextRunUtc();
                         DateTime updatedNextRunLocal = nextRunUtc.ToLocalTime();
                         Dispatcher.Invoke(() =>
                         {

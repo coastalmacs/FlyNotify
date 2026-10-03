@@ -26,7 +26,7 @@ namespace FlyNotify.Web.Services
         {
             SystemLog.Log("Daily Flight Scheduler Service Started.");
 
-            // Calculate timezone
+            // Timezone is maintained for informational and local log display
             var tzName = _config.GetValue<string>("Scheduler:TimeZone") ?? "Australia/Sydney";
             TimeZoneInfo localTz;
             try
@@ -39,21 +39,24 @@ namespace FlyNotify.Web.Services
                 localTz = TimeZoneInfo.Utc;
             }
 
-            var targetHour = _config.GetValue<int>("Scheduler:Hour", 10);
-            var targetMinute = _config.GetValue<int>("Scheduler:Minute", 0);
+            // Target scrape time is scheduled 15 seconds after 00:00 Zulu (UTC) to ensure airline updates have posted
+            var targetHourUtc = _config.GetValue<int>("Scheduler:HourUtc", _config.GetValue<int>("Scheduler:Hour", 0));
+            var targetMinuteUtc = _config.GetValue<int>("Scheduler:MinuteUtc", _config.GetValue<int>("Scheduler:Minute", 0));
+            var targetSecondUtc = _config.GetValue<int>("Scheduler:SecondUtc", _config.GetValue<int>("Scheduler:Second", 15));
 
             while (!stoppingToken.IsCancellationRequested)
             {
-                var nowLocal = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, localTz);
-                var nextRunLocal = nowLocal.Date.AddHours(targetHour).AddMinutes(targetMinute);
+                var nowUtc = DateTime.UtcNow;
+                var nextRunUtc = nowUtc.Date.AddHours(targetHourUtc).AddMinutes(targetMinuteUtc).AddSeconds(targetSecondUtc);
 
-                if (nowLocal >= nextRunLocal)
+                if (nowUtc >= nextRunUtc)
                 {
-                    nextRunLocal = nextRunLocal.AddDays(1);
+                    nextRunUtc = nextRunUtc.AddDays(1);
                 }
 
-                var delay = nextRunLocal - nowLocal;
-                SystemLog.Log($"Next automated scan scheduled for {nextRunLocal:yyyy-MM-dd HH:mm:ss} (In {delay.TotalHours:F2} hours)");
+                var delay = nextRunUtc - nowUtc;
+                var nextRunLocal = TimeZoneInfo.ConvertTimeFromUtc(nextRunUtc, localTz);
+                SystemLog.Log($"Next automated scan scheduled for {nextRunUtc:yyyy-MM-dd HH:mm:ss}Z ({nextRunLocal:HH:mm:ss} local) (In {delay.TotalHours:F2} hours)");
 
                 try
                 {
