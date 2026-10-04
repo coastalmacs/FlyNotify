@@ -291,24 +291,24 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let i = logs.length - 1; i >= 0; i--) {
             const line = logs[i];
             if (line.includes('Next automated scan scheduled for')) {
-                const match = line.match(/scheduled for (\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})Z?(?:\s*\(([^)]+)\))?/);
+                const match = line.match(/scheduled for (\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})Z?/);
                 if (match && match[1]) {
                     const zuluDateStr = match[1];
                     const nextRunTime = new Date(zuluDateStr.replace(' ', 'T') + 'Z');
-                    const localNote = match[2] ? ` (${match[2]})` : '';
                     if (!isNaN(nextRunTime)) {
+                        const localTimeStr = nextRunTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
                         const now = new Date();
                         const diffMs = nextRunTime - now;
                         if (diffMs > 0) {
                             const totalMins = Math.floor(diffMs / (1000 * 60));
                             const hrs = Math.floor(totalMins / 60);
                             const mins = totalMins % 60;
-                            nextRunText.textContent = `${zuluDateStr}Z${localNote} (In ${hrs}h ${mins}m)`;
+                            nextRunText.textContent = `${zuluDateStr}Z (${localTimeStr} local) (In ${hrs}h ${mins}m)`;
                             return;
                         }
+                        nextRunText.textContent = `${zuluDateStr}Z (${localTimeStr} local)`;
+                        return;
                     }
-                    nextRunText.textContent = `${zuluDateStr}Z${localNote}`;
-                    return;
                 }
             }
         }

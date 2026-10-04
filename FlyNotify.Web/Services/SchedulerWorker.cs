@@ -27,7 +27,9 @@ namespace FlyNotify.Web.Services
             SystemLog.Log("Daily Flight Scheduler Service Started.");
 
             // Timezone is maintained for informational and local log display
-            var tzName = _config.GetValue<string>("Scheduler:TimeZone") ?? "Australia/Sydney";
+            var tzName = _config.GetValue<string>("Scheduler:TimeZone") 
+                ?? Environment.GetEnvironmentVariable("TZ") 
+                ?? "Australia/Sydney";
             TimeZoneInfo localTz;
             try
             {
@@ -35,8 +37,14 @@ namespace FlyNotify.Web.Services
             }
             catch
             {
-                SystemLog.Log($"[TimeZone Error] Timezone '{tzName}' not found. Defaulting to UTC.");
-                localTz = TimeZoneInfo.Utc;
+                try
+                {
+                    localTz = TimeZoneInfo.Local;
+                }
+                catch
+                {
+                    localTz = TimeZoneInfo.Utc;
+                }
             }
 
             // Target scrape time is scheduled 15 seconds after 00:00 Zulu (UTC) to ensure airline updates have posted
@@ -55,8 +63,15 @@ namespace FlyNotify.Web.Services
                 }
 
                 var delay = nextRunUtc - nowUtc;
-                var nextRunLocal = TimeZoneInfo.ConvertTimeFromUtc(nextRunUtc, localTz);
-                SystemLog.Log($"Next automated scan scheduled for {nextRunUtc:yyyy-MM-dd HH:mm:ss}Z ({nextRunLocal:HH:mm:ss} local) (In {delay.TotalHours:F2} hours)");
+                if (!localTz.Equals(TimeZoneInfo.Utc))
+                {
+                    var nextRunLocal = TimeZoneInfo.ConvertTimeFromUtc(nextRunUtc, localTz);
+                    SystemLog.Log($"Next automated scan scheduled for {nextRunUtc:yyyy-MM-dd HH:mm:ss}Z ({nextRunLocal:HH:mm:ss} local) (In {delay.TotalHours:F2} hours)");
+                }
+                else
+                {
+                    SystemLog.Log($"Next automated scan scheduled for {nextRunUtc:yyyy-MM-dd HH:mm:ss}Z (In {delay.TotalHours:F2} hours)");
+                }
 
                 try
                 {

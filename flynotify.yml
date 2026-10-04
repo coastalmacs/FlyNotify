@@ -1,9 +1,7 @@
 services:
   flynotify:
-    build:
-      context: /share/Container/flynotify
-      dockerfile: Dockerfile
-      network: host
+    image: flynotify:latest
+    pull_policy: never
     container_name: flynotify
     ports:
       - "8085:8080"
@@ -11,6 +9,7 @@ services:
       - /share/Container/flynotify/data:/app/data
     environment:
       - TZ=Australia/Sydney
+      - Scheduler__TimeZone=Australia/Sydney
       - Scheduler__HourUtc=0
       - Scheduler__MinuteUtc=0
       - Scheduler__SecondUtc=15

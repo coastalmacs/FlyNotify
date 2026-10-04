@@ -22,8 +22,7 @@
    - Confirm the following files and folders exist:
        /share/Container/flynotify/Dockerfile
        /share/Container/flynotify/flynotify.yml
-       /share/Container/flynotify/FlyNotify.Core/
-       /share/Container/flynotify/FlyNotify.Web/
+       /share/Container/flynotify/publish/
    - Ensure a persistent data directory exists:
        /share/Container/flynotify/data
 
